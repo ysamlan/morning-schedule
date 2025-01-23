@@ -254,9 +254,13 @@
             );
 
             if (uncompletedItems.length > 0) {
-                const message = `Time to complete: ${uncompletedItems.join(', ')}`;
-                const utterance = new SpeechSynthesisUtterance(message);
-                speech.speak(utterance);
+                const date = new Date();
+                const options = { hour: '2-digit', minute: '2-digit' };
+                const formattedTime = date.toLocaleTimeString([], options);
+
+                const message = `It's ${formattedTime}. Time to ${uncompletedItems.join(', and ')}`;
+                
+                speakText(message);
             }
         }
 
@@ -335,7 +339,17 @@
 
         // Initialize
         saveAndRender();
-        setInterval(checkAndTriggerAlerts, 60000); // Check every minute
+
+        function startMinuteInterval(callback) {
+            const now = new Date();
+            const delay = (60 - now.getSeconds()) * 1000;
+            setTimeout(() => {
+                callback();
+                setInterval(callback, 60000);
+            }, delay);
+        }
+
+        startMinuteInterval(checkAndTriggerAlerts);
 
         // Reset for new day
         function checkForNewDay() {
@@ -350,5 +364,43 @@
         }
         setInterval(checkForNewDay, 60000);
     </script>
+
+<script type="module">
+    // TTS related stuff
+    // Using VITS instead of the simple browser SpeechSynthesisUtterance TTS support 
+    // because it sounds way better
+
+    // NOTES need to use a server (not localfile) to preview. can use the Live Preview vscode extension for this
+    // otherwise get flagged for excessive file calls from the browser if running file:// urls
+    import * as tts from 'https://cdn.jsdelivr.net/npm/@diffusionstudio/vits-web@1.0.3/+esm'
+
+    const VOICE = "en_US-amy-medium"; // 'en_US-hfc_female-medium' is OK too
+    // to see available voices you can do
+    // console.log("available voices: ", await tts.voices());
+
+    async function speakText(text) {
+      const wav = await tts.predict({
+        text: text,
+        voiceId: VOICE,
+      });
+
+      console.log("got wav", wav);
+
+      const audio = new Audio();
+      audio.src = URL.createObjectURL(wav);
+      audio.play();
+    }
+    window.speakText = speakText;
+
+    // Download voice if not loaded
+    const voices = await tts.stored();
+    if (!voices.includes(VOICE)) {
+        await tts.download(VOICE, (progress) => {
+            console.log(`Downloading ${progress.url} - ${Math.round(progress.loaded * 100 / progress.total)}%`);
+        });
+    } else {
+        console.log('Voice already loaded');
+    }
+  </script>
 </body>
 </html>
