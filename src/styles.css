@@ -1,0 +1,23 @@
+:root {
+  --primary: #4CAF50;
+  --secondary: #2196F3;
+  --warning: #FFC107;
+  --danger: #f44336;
+  --success: #006400;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.ready-to-leave {
+  color: var(--success);
+  font-weight: bold;
+}
+
+.alert-active {
+  background: var(--warning);
+}
