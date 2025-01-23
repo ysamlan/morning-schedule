@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kid's Time Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@1.14.0/dist/full.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <style>
         :root {
             --primary: #4CAF50;
@@ -20,83 +23,9 @@
             padding: 20px;
         }
 
-        .tab-container {
-            margin-bottom: 20px;
-        }
-
-        .tab-button {
-            padding: 10px 20px;
-            border: none;
-            background: #f0f0f0;
-            cursor: pointer;
-            margin-right: 5px;
-        }
-
-        .tab-button.active {
-            background: var(--secondary);
-            color: white;
-        }
-
-        .tab-content {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ddd;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .time-block {
-            border: 1px solid #ddd;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 4px;
-        }
-
-        .checklist-item {
-            display: flex;
-            align-items: center;
-            margin: 5px 0;
-            padding: 5px;
-        }
-
-        .checklist-item input[type="checkbox"] {
-            margin-right: 10px;
-        }
-
         .ready-to-leave {
             color: var(--success);
             font-weight: bold;
-        }
-
-        .stats-container {
-            margin-top: 20px;
-        }
-
-        .stats-card {
-            border: 1px solid #ddd;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 4px;
-        }
-
-        button {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            background: var(--secondary);
-            color: white;
-            margin: 5px;
-        }
-
-        button:hover {
-            opacity: 0.9;
-        }
-
-        .delete-btn {
-            background: var(--danger);
         }
 
         .alert-active {
@@ -105,33 +34,39 @@
     </style>
 </head>
 <body>
-    <div class="tab-container">
-        <button class="tab-button active" data-tab="daily">Daily Tasks</button>
-        <button class="tab-button" data-tab="setup">Setup</button>
-        <button class="tab-button" data-tab="stats">Stats</button>
+    <div class="tabs">
+        <button class="tab tab-bordered tab-active" data-tab="daily">Daily Tasks</button>
+        <button class="tab tab-bordered" data-tab="setup">Setup</button>
+        <button class="tab tab-bordered" data-tab="stats">Stats</button>
     </div>
 
     <div id="daily" class="tab-content active">
-        <h2>Today's Schedule</h2>
-        <div id="daily-checklist"></div>
+        <h2 class="text-2xl font-bold">Today's Schedule</h2>
+        <div id="daily-checklist" class="mt-4"></div>
     </div>
 
-    <div id="setup" class="tab-content">
-        <h2>Schedule Setup</h2>
-        <button onclick="addTimeBlock()">Add Time Block</button>
-        <div id="setup-container"></div>
+    <div id="setup" class="tab-content hidden">
+        <h2 class="text-2xl font-bold">Schedule Setup</h2>
+        <div id="setup-container" class="mt-4"></div>
+        <button class="btn btn-primary mt-4" onclick="addTimeBlock()">
+            <i class="fas fa-plus-circle mr-2"></i>Add Time Block
+        </button>
     </div>
 
-    <div id="stats" class="tab-content">
-        <h2>Performance Stats</h2>
-        <div class="stats-container">
-            <div class="stats-card">
-                <h3>Weekly Stats</h3>
-                <div id="weekly-stats"></div>
+    <div id="stats" class="tab-content hidden">
+        <h2 class="text-2xl font-bold">Performance Stats</h2>
+        <div class="stats-container mt-4">
+            <div class="card shadow-lg compact bg-base-100">
+                <div class="card-body">
+                    <h3 class="card-title">Weekly Stats</h3>
+                    <div id="weekly-stats"></div>
+                </div>
             </div>
-            <div class="stats-card">
-                <h3>Monthly Stats</h3>
-                <div id="monthly-stats"></div>
+            <div class="card shadow-lg compact bg-base-100 mt-4">
+                <div class="card-body">
+                    <h3 class="card-title">Monthly Stats</h3>
+                    <div id="monthly-stats"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -150,13 +85,13 @@
         const speech = window.speechSynthesis;
 
         // Tab functionality
-        document.querySelectorAll('.tab-button').forEach(button => {
+        document.querySelectorAll('.tab').forEach(button => {
             button.addEventListener('click', () => {
-                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                document.querySelectorAll('.tab').forEach(btn => btn.classList.remove('tab-active'));
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
                 
-                button.classList.add('active');
-                document.getElementById(button.dataset.tab).classList.add('active');
+                button.classList.add('tab-active');
+                document.getElementById(button.dataset.tab).classList.remove('hidden');
             });
         });
 
@@ -292,21 +227,31 @@
         function renderSetup() {
             const container = document.getElementById('setup-container');
             container.innerHTML = currentSchedule.timeBlocks.map((block, blockIndex) => `
-                <div class="time-block">
-                    <input type="time" value="${block.time}" 
-                           onchange="updateTime(${blockIndex}, this.value)">
-                    <button class="delete-btn" onclick="removeTimeBlock(${blockIndex})">Remove Block</button>
-                    ${block.items.map((item, itemIndex) => `
-                        <div class="checklist-item ${itemIndex === block.items.length - 1 && 
-                                                    blockIndex === currentSchedule.timeBlocks.length - 1 ? 
-                                                    'ready-to-leave' : ''}">
-                            <input type="text" value="${item}" 
-                                   onchange="updateChecklistItem(${blockIndex}, ${itemIndex}, this.value)">
-                            <button class="delete-btn" 
-                                    onclick="removeChecklistItem(${blockIndex}, ${itemIndex})">Remove</button>
+                <div class="card shadow-lg compact bg-base-100 mb-4">
+                    <div class="card-body">
+                        <div class="flex">
+                            <input type="time" class="w-1/2 input input-bordered" value="${block.time}" 
+                                onchange="updateTime(${blockIndex}, this.value)">
+                            <button class="w-1/2 btn btn-error" onclick="removeTimeBlock(${blockIndex})">
+                                <i class="fas fa-trash-alt mr-2"></i>Remove Block
+                            </button>
                         </div>
-                    `).join('')}
-                    <button onclick="addChecklistItem(${blockIndex})">Add Item</button>
+                        ${block.items.map((item, itemIndex) => `
+                            <div class="flex items-center mt-2 ${itemIndex === block.items.length - 1 && 
+                                                                blockIndex === currentSchedule.timeBlocks.length - 1 ? 
+                                                                'ready-to-leave' : ''}">
+                                <input type="text" class="input input-bordered w-full max-w-xs" value="${item}" 
+                                    onchange="updateChecklistItem(${blockIndex}, ${itemIndex}, this.value)">
+                                <button class="btn btn-error ml-2" 
+                                        onclick="removeChecklistItem(${blockIndex}, ${itemIndex})">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        `).join('')}
+                        <button class="btn btn-primary mt-2" onclick="addChecklistItem(${blockIndex})">
+                            <i class="fas fa-plus-circle mr-2"></i>Add Item
+                        </button>
+                    </div>
                 </div>
             `).join('');
         }
@@ -314,18 +259,20 @@
         function renderDaily() {
             const container = document.getElementById('daily-checklist');
             container.innerHTML = currentSchedule.timeBlocks.map((block, blockIndex) => `
-                <div class="time-block ${activeAlerts.has(blockIndex) ? 'alert-active' : ''}">
-                    <h3>${block.time}</h3>
-                    ${block.items.map((item, itemIndex) => `
-                        <div class="checklist-item ${itemIndex === block.items.length - 1 && 
-                                                    blockIndex === currentSchedule.timeBlocks.length - 1 ? 
-                                                    'ready-to-leave' : ''}">
-                            <input type="checkbox" 
-                                   ${block.completed && block.completed.has(itemIndex) ? 'checked' : ''}
-                                   onclick="toggleChecklistItem(${blockIndex}, ${itemIndex})">
-                            <span>${item}</span>
-                        </div>
-                    `).join('')}
+                <div class="card shadow-lg compact bg-base-100 mb-4 ${activeAlerts.has(blockIndex) ? 'alert-active' : ''}">
+                    <div class="card-body">
+                        <h3 class="card-title">${block.time}</h3>
+                        ${block.items.map((item, itemIndex) => `
+                            <div class="flex items-center mt-2 ${itemIndex === block.items.length - 1 && 
+                                                            blockIndex === currentSchedule.timeBlocks.length - 1 ? 
+                                                            'ready-to-leave' : ''}">
+                                <input type="checkbox" class="checkbox mr-2" 
+                                       ${block.completed && block.completed.has(itemIndex) ? 'checked' : ''}
+                                       onclick="toggleChecklistItem(${blockIndex}, ${itemIndex})">
+                                <span>${item}</span>
+                            </div>
+                        `).join('')}
+                    </div>
                 </div>
             `).join('');
         }
@@ -365,42 +312,42 @@
         setInterval(checkForNewDay, 60000);
     </script>
 
-<script type="module">
-    // TTS related stuff
-    // Using VITS instead of the simple browser SpeechSynthesisUtterance TTS support 
-    // because it sounds way better
+    <script type="module">
+        // TTS related stuff
+        // Using VITS instead of the simple browser SpeechSynthesisUtterance TTS support 
+        // because it sounds way better
 
-    // NOTES need to use a server (not localfile) to preview. can use the Live Preview vscode extension for this
-    // otherwise get flagged for excessive file calls from the browser if running file:// urls
-    import * as tts from 'https://cdn.jsdelivr.net/npm/@diffusionstudio/vits-web@1.0.3/+esm'
+        // NOTES need to use a server (not localfile) to preview. can use the Live Preview vscode extension for this
+        // otherwise get flagged for excessive file calls from the browser if running file:// urls
+        import * as tts from 'https://cdn.jsdelivr.net/npm/@diffusionstudio/vits-web@1.0.3/+esm'
 
-    const VOICE = "en_US-amy-medium"; // 'en_US-hfc_female-medium' is OK too
-    // to see available voices you can do
-    // console.log("available voices: ", await tts.voices());
+        const VOICE = "en_US-amy-medium"; // 'en_US-hfc_female-medium' is OK too
+        // to see available voices you can do
+        // console.log("available voices: ", await tts.voices());
 
-    async function speakText(text) {
-      const wav = await tts.predict({
-        text: text,
-        voiceId: VOICE,
-      });
+        async function speakText(text) {
+          const wav = await tts.predict({
+            text: text,
+            voiceId: VOICE,
+          });
 
-      console.log("got wav", wav);
+          console.log("got wav", wav);
 
-      const audio = new Audio();
-      audio.src = URL.createObjectURL(wav);
-      audio.play();
-    }
-    window.speakText = speakText;
+          const audio = new Audio();
+          audio.src = URL.createObjectURL(wav);
+          audio.play();
+        }
+        window.speakText = speakText;
 
-    // Download voice if not loaded
-    const voices = await tts.stored();
-    if (!voices.includes(VOICE)) {
-        await tts.download(VOICE, (progress) => {
-            console.log(`Downloading ${progress.url} - ${Math.round(progress.loaded * 100 / progress.total)}%`);
-        });
-    } else {
-        console.log('Voice already loaded');
-    }
-  </script>
+        // Download voice if not loaded
+        const voices = await tts.stored();
+        if (!voices.includes(VOICE)) {
+            await tts.download(VOICE, (progress) => {
+                console.log(`Downloading ${progress.url} - ${Math.round(progress.loaded * 100 / progress.total)}%`);
+            });
+        } else {
+            console.log('Voice already loaded');
+        }
+      </script>
 </body>
 </html>
