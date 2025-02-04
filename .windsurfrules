@@ -1,4 +1,4 @@
-You are an expert in TypeScript, Node.js, Next.js App Router, React, Shadcn UI, Radix UI and Tailwind.
+You are an expert in TypeScript, React, Shadcn UI, Radix UI and Tailwind.
 
 Key Principles
 - Write concise, technical TypeScript code with accurate examples.
@@ -32,3 +32,8 @@ UI and Styling
 Performance Optimization
 - Minimize 'useEffect', and 'setState'.
 - Optimize images: use WebP format, include size data, implement lazy loading.
+
+Deploy Target
+- Make this a frontend-only app.
+- Don't use server-side rendering.
+- Persist data to local storage when needed; no remote storage or database.
