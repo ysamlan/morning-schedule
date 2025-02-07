@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { TimeBlock as TimeBlockComponent } from "./components/time-block";
 import { ModeTabs } from "./components/mode-tabs";
 import { TimeBlock, ChecklistItem } from "./types";
@@ -10,11 +10,12 @@ import {
   resetDayChecklist,
   addDayHistory,
 } from "./utils/storage";
-import { format, parse, isAfter } from "date-fns";
+import { format, parse, isAfter, startOfDay } from "date-fns";
 
 function App() {
   const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([]);
   const [mode, setMode] = useState<"checklist" | "setup">("checklist");
+  const lastResetDay = useRef(startOfDay(new Date()).getTime());
 
   // Load initial state
   useEffect(() => {
@@ -72,6 +73,11 @@ function App() {
     if (!lastBlock) return;
 
     const now = new Date();
+    const today = startOfDay(now).getTime();
+    
+    // Only reset once per day
+    if (today === lastResetDay.current) return;
+    
     const lastTime = parse(lastBlock.time, "HH:mm", now);
     
     if (isAfter(now, lastTime)) {
@@ -79,6 +85,7 @@ function App() {
       addDayHistory(allCompleted);
       const resetBlocks = resetDayChecklist();
       setTimeBlocks(resetBlocks);
+      lastResetDay.current = today;
     }
   }, [timeBlocks]);
 
