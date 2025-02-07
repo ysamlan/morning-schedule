@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { TimeBlock as TimeBlockType, ChecklistItem } from "../types";
-import { cn } from "../utils/cn";
+import { Checkbox } from "./ui/checkbox";
 
 interface TimeBlockProps {
   block: TimeBlockType;
@@ -19,9 +19,9 @@ export function TimeBlock({
 }: TimeBlockProps) {
   const [newItemText, setNewItemText] = useState("");
 
-  const handleCheckItem = (itemId: string) => {
+  const handleCheckItem = (itemId: string, checked: boolean) => {
     const updatedItems = block.items.map(item =>
-      item.id === itemId ? { ...item, completed: !item.completed } : item
+      item.id === itemId ? { ...item, completed: checked } : item
     );
     onUpdateItems(updatedItems);
   };
@@ -45,28 +45,27 @@ export function TimeBlock({
 
   if (mode === "checklist") {
     return (
-      <div className="p-4 border rounded-lg mb-4 bg-white shadow-sm">
-        <div className="text-lg font-medium mb-2">
-          {block.time}
+      <div className="time-block">
+        <div className="time-block-header">
+          <span>{block.time}</span>
         </div>
-        <ul className="space-y-2">
+        <ul className="checklist">
           {block.items.map((item) => (
             <li
               key={item.id}
-              className={cn(
-                "flex items-center gap-2",
-                item.isLastItem && "font-bold text-green-800"
-              )}
+              className={`checklist-item ${item.isLastItem ? 'last-item' : ''}`}
             >
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={item.completed}
-                onChange={() => handleCheckItem(item.id)}
-                className="h-4 w-4"
+                onCheckedChange={(checked) => handleCheckItem(item.id, checked as boolean)}
+                id={item.id}
               />
-              <span className={item.completed ? "line-through" : ""}>
+              <label
+                htmlFor={item.id}
+                className={item.completed ? "completed" : ""}
+              >
                 {item.text}
-              </span>
+              </label>
             </li>
           ))}
         </ul>
@@ -75,37 +74,25 @@ export function TimeBlock({
   }
 
   return (
-    <div className="p-4 border rounded-lg mb-4 bg-white shadow-sm">
-      <div className="flex items-center gap-4 mb-4">
+    <div className="time-block">
+      <div className="time-block-header">
         <input
           type="time"
           value={block.time}
           onChange={(e) => onUpdateTime(e.target.value)}
-          className="border rounded px-2 py-1"
         />
-        <button
-          onClick={onDelete}
-          className="text-red-500 hover:text-red-700"
-        >
-          Delete Time Block
-        </button>
+        <button onClick={onDelete}>Delete Time Block</button>
       </div>
 
-      <ul className="space-y-2">
+      <ul className="checklist">
         {block.items.map((item) => (
           <li
             key={item.id}
-            className={cn(
-              "flex items-center gap-2",
-              item.isLastItem && "font-bold text-green-800"
-            )}
+            className={`checklist-item ${item.isLastItem ? 'last-item' : ''}`}
           >
             <span>{item.text}</span>
             {!item.isLastItem && (
-              <button
-                onClick={() => handleDeleteItem(item.id)}
-                className="text-red-500 hover:text-red-700 ml-auto"
-              >
+              <button onClick={() => handleDeleteItem(item.id)}>
                 Delete
               </button>
             )}
@@ -113,19 +100,15 @@ export function TimeBlock({
         ))}
       </ul>
 
-      <div className="mt-4 flex gap-2">
+      <div className="add-item">
         <input
           type="text"
           value={newItemText}
           onChange={(e) => setNewItemText(e.target.value)}
           placeholder="Add new item..."
-          className="border rounded px-2 py-1 flex-1"
           onKeyPress={(e) => e.key === "Enter" && handleAddItem()}
         />
-        <button
-          onClick={handleAddItem}
-          className="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600"
-        >
+        <button onClick={handleAddItem}>
           Add
         </button>
       </div>

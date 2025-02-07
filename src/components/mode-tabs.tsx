@@ -1,3 +1,5 @@
+import * as Tabs from "@radix-ui/react-tabs";
+
 interface ModeTabsProps {
   activeMode: "checklist" | "setup";
   onModeChange: (mode: "checklist" | "setup") => void;
@@ -5,27 +7,25 @@ interface ModeTabsProps {
 
 export function ModeTabs({ activeMode, onModeChange }: ModeTabsProps) {
   return (
-    <div className="flex space-x-1 rounded-lg bg-blue-100 p-1 mb-6">
-      <button
-        className={`flex-1 rounded-md px-3 py-2 text-sm font-medium ${
-          activeMode === "checklist"
-            ? "bg-white shadow text-blue-600"
-            : "text-blue-500 hover:bg-white/50"
-        }`}
-        onClick={() => onModeChange("checklist")}
-      >
-        Checklist
-      </button>
-      <button
-        className={`flex-1 rounded-md px-3 py-2 text-sm font-medium ${
-          activeMode === "setup"
-            ? "bg-white shadow text-blue-600"
-            : "text-blue-500 hover:bg-white/50"
-        }`}
-        onClick={() => onModeChange("setup")}
-      >
-        Setup
-      </button>
-    </div>
+    <Tabs.Root
+      value={activeMode}
+      onValueChange={onModeChange}
+      defaultValue="checklist"
+    >
+      <Tabs.List className="inline-flex h-10 items-center justify-center rounded-md bg-gray-100 p-1 mb-6">
+        <Tabs.Trigger
+          value="checklist"
+          className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-white data-[state=active]:text-gray-950 data-[state=active]:shadow-sm flex-1"
+        >
+          Checklist
+        </Tabs.Trigger>
+        <Tabs.Trigger
+          value="setup"
+          className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-white data-[state=active]:text-gray-950 data-[state=active]:shadow-sm flex-1"
+        >
+          Setup
+        </Tabs.Trigger>
+      </Tabs.List>
+    </Tabs.Root>
   );
 }
