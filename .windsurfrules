@@ -9,7 +9,6 @@ Key Principles
 
 Naming Conventions
 - Use lowercase with dashes for directories (e.g., components/auth-wizard).
-- Favor named exports for components.
 
 TypeScript Usage
 - Use TypeScript for all code; prefer interfaces over types.
@@ -22,10 +21,14 @@ Syntax and Formatting
 - Avoid unnecessary curly braces in conditionals; use concise syntax for simple statements.
 
 UI and Styling
-- Use flowbite-svelte for components and styling. Tailwind (which Flowbite is built on top of) can be used when styling isn't covered by flowbite or flowbite-svelte.
-- Implement responsive design with Flowbite/Tailwind; use a mobile-first approach.
+- Use Tailwind 4.
+- Implement responsive design with; use a mobile-first approach.
 
 Deploy Target
 - Make this a clientside-only app (SvelteKit adapter-static (prerender) only).
 - Don't use server-side rendering.
 - Persist data to browserlocal storage when needed; no remote storage or database.
+
+Documentation
+
+- You may need to refer to the documentation for the correct version of the libraries we're using. for Tailwind 4 see https://tailwindcss.com/docs; for Svelte see https://svelte.dev/docs/svelte/overview and for SvelteKit see https://svelte.dev/docs/kit/introduction. 
