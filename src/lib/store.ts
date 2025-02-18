@@ -71,12 +71,26 @@ function createAppStore() {
                     : at
             )
         })),
+        setCompletionAnimation: (alertTimeId: string, show: boolean) => update(state => ({
+            ...state,
+            alertTimes: state.alertTimes.map(at =>
+                at.id === alertTimeId
+                    ? { ...at, showCompletionAnimation: show }
+                    : at
+            )
+        })),
+        setLastAnnouncedTime: (time: string) => update(state => ({
+            ...state,
+            lastAnnouncedTime: time
+        })),
         resetChecklist: () => update(state => ({
             ...state,
             alertTimes: state.alertTimes.map(at => ({
                 ...at,
-                items: at.items.map(item => ({ ...item, isCompleted: false }))
-            }))
+                items: at.items.map(item => ({ ...item, isCompleted: false })),
+                showCompletionAnimation: false
+            })),
+            lastAnnouncedTime: undefined
         }))
     };
 }
