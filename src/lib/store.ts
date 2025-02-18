@@ -91,7 +91,14 @@ function createAppStore() {
                 showCompletionAnimation: false
             })),
             lastAnnouncedTime: undefined
-        }))
+        })),
+        // For testing purposes only
+        clearData: () => {
+            if (typeof localStorage !== 'undefined') {
+                localStorage.clear();
+            }
+            set(DEFAULT_APP_STATE);
+        }
     };
 }
 
