@@ -8,10 +8,17 @@ import { appStore } from '$lib/store';
 // Mock the audio module
 vi.mock('$lib/audio');
 
+// Mock crypto.randomUUID to return predictable values
+let mockIdCounter = 0;
+vi.stubGlobal('crypto', {
+    randomUUID: () => `test-id-${mockIdCounter++}`
+});
+
 describe('/+page.svelte', () => {
     beforeEach(() => {
-        // Reset store to initial state
+        // Reset store to initial state and ID counter
         appStore.clearData();
+        mockIdCounter = 0;
         vi.useFakeTimers();
     });
 
@@ -68,6 +75,9 @@ describe('/+page.svelte', () => {
     test('should toggle item completion in daily mode', async () => {
         render(Page);
         
+        // Set the time to 8:30 AM (before our 9:00 AM test time)
+        vi.setSystemTime(new Date(2025, 1, 1, 8, 30));
+        
         // Setup: Add time and item
         const timeInput = screen.getByPlaceholderText('Add new alert time');
         await fireEvent.input(timeInput, { target: { value: '09:00' } });
@@ -86,6 +96,7 @@ describe('/+page.svelte', () => {
         // Find the daily mode section and the checkbox within it
         const dailySection = screen.getByText('Daily Checklist').closest('div');
         const checkbox = within(dailySection).getByRole('checkbox');
+        
         await fireEvent.click(checkbox);
 
         const store = get(appStore);

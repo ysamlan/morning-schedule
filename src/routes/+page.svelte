@@ -140,11 +140,8 @@
                                         type="checkbox"
                                         checked={item.isCompleted}
                                         on:change={() => {
-                                            console.log("Changing toggle state for item ", item)
                                             appStore.toggleChecklistItem(alertTime.id, item.id);
-                                            // Get fresh state after toggle
                                             const currentAlertTime = $appStore.alertTimes.find(at => at.id === alertTime.id);
-                                            console.log("current time items are ", currentAlertTime.items);
                                             if (currentAlertTime?.items.every(i => i.isCompleted)) {
                                                 playSuccess();
                                                 appStore.setCompletionAnimation(alertTime.id, true);

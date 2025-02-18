@@ -56,21 +56,29 @@ function createAppStore() {
                     : at
             )
         })),
-        toggleChecklistItem: (alertTimeId: string, itemId: string) => update(state => ({
-            ...state,
-            alertTimes: state.alertTimes.map(at => 
-                at.id === alertTimeId 
-                    ? {
-                        ...at,
-                        items: at.items.map(item => 
-                            item.id === itemId 
-                                ? { ...item, isCompleted: !item.isCompleted }
-                                : item
-                        )
-                    }
-                    : at
-            )
-        })),
+        toggleChecklistItem: (alertTimeId: string, itemId: string) => 
+            update(state => {
+                // First find the alert time and item
+                const alertTime = state.alertTimes.find(at => at.id === alertTimeId);
+                if (!alertTime) return state;
+
+                const item = alertTime.items.find(i => i.id === itemId);
+                if (!item) return state;
+
+                // Create new arrays with the updated item
+                const updatedItems = alertTime.items.map(i => 
+                    i.id === itemId ? { ...i, isCompleted: !i.isCompleted } : i
+                );
+
+                const updatedAlertTimes = state.alertTimes.map(at =>
+                    at.id === alertTimeId ? { ...at, items: updatedItems } : at
+                );
+
+                return {
+                    ...state,
+                    alertTimes: updatedAlertTimes
+                };
+            }),
         setCompletionAnimation: (alertTimeId: string, show: boolean) => update(state => ({
             ...state,
             alertTimes: state.alertTimes.map(at =>
