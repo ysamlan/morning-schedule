@@ -102,4 +102,78 @@ describe('/+page.svelte', () => {
         const store = get(appStore);
         expect(store.alertTimes[0].items[0].isCompleted).toBe(true);
     });
+
+    test('should persist tasks between setup and task list modes', async () => {
+        render(Page);
+        
+        // Set initial time to 8:30 AM
+        vi.setSystemTime(new Date(2025, 1, 1, 8, 30));
+        
+        // Add two different times with tasks in setup mode
+        const timeInput = screen.getByPlaceholderText('Add new alert time');
+        
+        // Add first time (9:00) and its tasks
+        await fireEvent.input(timeInput, { target: { value: '09:00' } });
+        await fireEvent.click(screen.getByText('Add Time'));
+        
+        const setupSection = screen.getByText('Setup Mode').closest('div');
+        const firstTimeSection = within(setupSection).getByRole('heading', { name: '09:00' }).closest('div');
+        const firstItemInput = within(firstTimeSection).getByPlaceholderText('Add new checklist item');
+        
+        await fireEvent.input(firstItemInput, { target: { value: 'Take morning vitamins' } });
+        await fireEvent.click(within(firstTimeSection).getByText('Add Item'));
+        
+        // Add second time (10:00) and its tasks
+        await fireEvent.input(timeInput, { target: { value: '10:00' } });
+        await fireEvent.click(screen.getByText('Add Time'));
+        
+        const secondTimeSection = within(setupSection).getByRole('heading', { name: '10:00' }).closest('div');
+        const secondItemInput = within(secondTimeSection).getByPlaceholderText('Add new checklist item');
+        
+        await fireEvent.input(secondItemInput, { target: { value: 'Check email' } });
+        await fireEvent.click(within(secondTimeSection).getByText('Add Item'));
+        
+        // Switch to daily mode and verify tasks are present
+        await fireEvent.click(screen.getByText('Switch to Daily Checklist Mode'));
+        
+        const dailySection = screen.getByText('Daily Checklist').closest('div');
+        
+        // Verify both tasks are visible and unchecked
+        expect(within(dailySection).getByText('Take morning vitamins')).toBeInTheDocument();
+        expect(within(dailySection).getByText('Check email')).toBeInTheDocument();
+        
+        const checkboxes = within(dailySection).getAllByRole('checkbox');
+        expect(checkboxes).toHaveLength(2);
+        checkboxes.forEach(checkbox => {
+            expect(checkbox).not.toBeChecked();
+        });
+        
+        // Complete one task
+        await fireEvent.click(checkboxes[0]);
+        
+        // Switch back to setup mode and verify tasks still exist
+        await fireEvent.click(screen.getByText('Switch to Setup Mode'));
+        
+        const updatedSetupSection = screen.getByText('Setup Mode').closest('div');
+        expect(within(updatedSetupSection).getByText('Take morning vitamins')).toBeInTheDocument();
+        expect(within(updatedSetupSection).getByText('Check email')).toBeInTheDocument();
+        
+        // Switch to daily mode again and verify completion state persisted
+        await fireEvent.click(screen.getByText('Switch to Daily Checklist Mode'));
+        
+        const updatedDailySection = screen.getByText('Daily Checklist').closest('div');
+        const updatedCheckboxes = within(updatedDailySection).getAllByRole('checkbox');
+        expect(updatedCheckboxes[0]).toBeChecked();
+        expect(updatedCheckboxes[1]).not.toBeChecked();
+        
+        // Verify store state directly
+        const store = get(appStore);
+        expect(store.alertTimes).toHaveLength(2);
+        expect(store.alertTimes[0].time).toBe('09:00');
+        expect(store.alertTimes[0].items[0].name).toBe('Take morning vitamins');
+        expect(store.alertTimes[0].items[0].isCompleted).toBe(true);
+        expect(store.alertTimes[1].time).toBe('10:00');
+        expect(store.alertTimes[1].items[0].name).toBe('Check email');
+        expect(store.alertTimes[1].items[0].isCompleted).toBe(false);
+    });
 });
