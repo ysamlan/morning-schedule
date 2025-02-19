@@ -5,7 +5,6 @@ Key Principles
 - Use functional and declarative programming patterns; avoid classes.
 - Prefer iteration and modularization over code duplication.
 - Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError).
-- Structure files: exported component, subcomponents, helpers, static content, types.
 
 Naming Conventions
 - Use lowercase with dashes for directories (e.g., components/auth-wizard).
@@ -22,7 +21,7 @@ Syntax and Formatting
 
 UI and Styling
 - Use Tailwind 4.
-- Implement responsive design with; use a mobile-first approach.
+- Implement responsive design; use a mobile-first approach.
 
 Deploy Target
 - Make this a clientside-only app (SvelteKit adapter-static (prerender) only).
@@ -30,5 +29,7 @@ Deploy Target
 - Persist data to browserlocal storage when needed; no remote storage or database.
 
 Documentation
-
 - You may need to refer to the documentation for the correct version of the libraries we're using. for Tailwind 4 see https://tailwindcss.com/docs; for Svelte see https://svelte.dev/docs/svelte/overview and for SvelteKit see https://svelte.dev/docs/kit/introduction. 
+
+Tooling
+- Use pnpm.
