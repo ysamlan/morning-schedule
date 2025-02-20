@@ -4,9 +4,15 @@ import { render, screen, within, fireEvent } from '@testing-library/svelte';
 import { get } from 'svelte/store';
 import Page from './+page.svelte';
 import { appStore } from '$lib/store';
+import * as audio from '$lib/audio';
 
-// Mock the audio module
-vi.mock('$lib/audio');
+// Set up spies for audio functions
+const audioSpies = {
+    playAlert: vi.spyOn(audio, 'playAlert'),
+    speak: vi.spyOn(audio, 'speak'),
+    playSuccess: vi.spyOn(audio, 'playSuccess'),
+    cancelSpeech: vi.spyOn(audio, 'cancelSpeech')
+};
 
 // Mock crypto.randomUUID to return predictable values
 let mockIdCounter = 0;
@@ -20,6 +26,8 @@ describe('/+page.svelte', () => {
         appStore.clearData();
         mockIdCounter = 0;
         vi.useFakeTimers();
+        // Reset all spies
+        Object.values(audioSpies).forEach(spy => spy.mockClear());
     });
 
     test('should start in setup mode', () => {
@@ -115,7 +123,8 @@ describe('/+page.svelte', () => {
         // Add first time (9:00) and its tasks
         await fireEvent.input(timeInput, { target: { value: '09:00' } });
         await fireEvent.click(screen.getByText('Add Time'));
-        
+
+        // Find the setup mode section and then find the alert time within it
         const setupSection = screen.getByText('Setup Mode').closest('div');
         const firstTimeSection = within(setupSection).getByRole('heading', { name: '09:00' }).closest('div');
         const firstItemInput = within(firstTimeSection).getByPlaceholderText('Add new checklist item');
@@ -175,5 +184,70 @@ describe('/+page.svelte', () => {
         expect(store.alertTimes[1].time).toBe('10:00');
         expect(store.alertTimes[1].items[0].name).toBe('Check email');
         expect(store.alertTimes[1].items[0].isCompleted).toBe(false);
+    });
+
+    test('should only alert once per minute when time matches', async () => {
+        render(Page);
+        
+        // Set initial time to 8:55 AM
+        vi.setSystemTime(new Date(2025, 1, 1, 8, 55));
+        
+        // Add an alert time for 9:00 with a task
+        const timeInput = screen.getByPlaceholderText('Add new alert time');
+        await fireEvent.input(timeInput, { target: { value: '09:00' } });
+        await fireEvent.click(screen.getByText('Add Time'));
+        
+        const setupSection = screen.getByText('Setup Mode').closest('div');
+        const alertTimeSection = within(setupSection).getByRole('heading', { name: '09:00' }).closest('div');
+        const itemInput = within(alertTimeSection).getByPlaceholderText('Add new checklist item');
+        await fireEvent.input(itemInput, { target: { value: 'Take medication' } });
+        await fireEvent.click(within(alertTimeSection).getByText('Add Item'));
+
+        // Switch to daily mode
+        await fireEvent.click(screen.getByText('Switch to Daily Checklist Mode'));
+
+        // Advance time to 9:00 AM
+        vi.setSystemTime(new Date(2025, 1, 1, 9, 0));
+        vi.advanceTimersByTime(1000); // Trigger the interval check
+
+        // Wait for the setTimeout in announceItems
+        await vi.advanceTimersByTimeAsync(50);
+
+        // Verify alert was played once
+        expect(audioSpies.playAlert).toHaveBeenCalledTimes(1);
+        expect(audioSpies.speak).toHaveBeenCalledTimes(1);
+        expect(audioSpies.speak).toHaveBeenCalledWith('Time for 09:00. You need to: Take medication');
+
+        // Reset spy call counts
+        Object.values(audioSpies).forEach(spy => spy.mockClear());
+
+        // Advance time by 30 seconds (still 9:00)
+        vi.advanceTimersByTime(30000);
+
+        // Verify no additional alerts were played
+        expect(audioSpies.playAlert).not.toHaveBeenCalled();
+        expect(audioSpies.speak).not.toHaveBeenCalled();
+
+        // Advance to next minute (9:01)
+        vi.setSystemTime(new Date(2025, 1, 1, 9, 1));
+        vi.advanceTimersByTime(1000);
+
+        // Verify no alerts at 9:01
+        expect(audioSpies.playAlert).not.toHaveBeenCalled();
+        expect(audioSpies.speak).not.toHaveBeenCalled();
+
+        // Reset spy call counts
+        Object.values(audioSpies).forEach(spy => spy.mockClear());
+
+        // Go to next alert time
+        vi.setSystemTime(new Date(2025, 1, 1, 9, 0));
+        vi.advanceTimersByTime(24 * 60 * 60 * 1000); // Advance 24 hours
+
+        // Wait for the setTimeout in announceItems
+        await vi.advanceTimersByTimeAsync(50);
+
+        // Verify alerts play again for the next day
+        expect(audioSpies.playAlert).toHaveBeenCalledTimes(1);
+        expect(audioSpies.speak).toHaveBeenCalledTimes(1);
     });
 });
