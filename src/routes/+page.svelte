@@ -109,50 +109,71 @@
     }
 </script>
 
-<main>
-    <button on:click={() => isSetupMode.value = !isSetupMode.value}>
-        Switch to {isSetupMode.value ? 'Daily Checklist' : 'Setup'} Mode
-    </button>
+<main class="min-h-screen bg-gray-50">
+    <div class="flex justify-end mb-6">
+        <button 
+            on:click={() => isSetupMode.value = !isSetupMode.value}
+            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+            Switch to {isSetupMode.value ? 'Daily Checklist' : 'Setup'} Mode
+        </button>
+    </div>
 
     {#if isSetupMode.value}
-        <div>
-            <h2>Setup Mode</h2>
+        <div class="space-y-8">
             <div>
-                <input
-                    type="time"
-                    bind:value={newTime}
-                    placeholder="Add new alert time"
-                />
-                <button on:click={handleAddTime}>Add Time</button>
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Setup Mode</h2>
+                <div class="flex gap-4 items-center">
+                    <input
+                        type="time"
+                        bind:value={newTime}
+                        placeholder="Add new alert time"
+                        class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-48 sm:text-sm border-gray-300 rounded-md"
+                    />
+                    <button 
+                        on:click={handleAddTime}
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    >
+                        Add Time
+                    </button>
+                </div>
             </div>
 
             {#each alertTimes.value as alertTime}
-                <div>
-                    <h3>{alertTime.time}</h3>
-                    <button on:click={() => 
-                            alertTimes.value = alertTimes.value.filter(at => at.id !== alertTime.id)
-                        }>
-                        Remove Time
-                    </button>
+                <div class="bg-white shadow rounded-lg p-6 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-medium text-gray-900">{alertTime.time}</h3>
+                        <button 
+                            on:click={() => alertTimes.value = alertTimes.value.filter(at => at.id !== alertTime.id)}
+                            class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                        >
+                            Remove Time
+                        </button>
+                    </div>
                     
-                    <div>
+                    <div class="flex gap-4 items-center">
                         <input
                             type="text"
                             bind:value={newItemName[alertTime.id]}
                             placeholder="Add new checklist item"
+                            class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
                         />
-                        <button on:click={() => handleAddItem(alertTime.id)}>
+                        <button 
+                            on:click={() => handleAddItem(alertTime.id)}
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap"
+                        >
                             Add Item
                         </button>
                     </div>
 
-                    <ul>
+                    <ul class="space-y-2">
                         {#each alertTime.items as item}
-                            <li>
-                                {item.name}
-                                <button on:click={() => 
-                                    alertTime.items = alertTime.items.filter(i => i.id !== item.id)
-                                }>
+                            <li class="flex items-center justify-between group">
+                                <span class="text-gray-700">{item.name}</span>
+                                <button 
+                                    on:click={() => alertTime.items = alertTime.items.filter(i => i.id !== item.id)}
+                                    class="opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                                >
                                     Remove
                                 </button>
                             </li>
@@ -162,18 +183,25 @@
             {/each}
         </div>
     {:else}
-        <div>
-            <h2>Daily Checklist</h2>
+        <div class="space-y-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Daily Checklist</h2>
             {#each alertTimes.value as alertTime}
-                <div class:completion-animation={alertTime.showCompletionAnimation}>
-                    <h3>{alertTime.time}</h3>
-                    <ul>
+                <div 
+                    class="bg-white shadow rounded-lg p-6 space-y-4 transition-transform"
+                    class:completion-animation={alertTime.showCompletionAnimation}
+                >
+                    <h3 class="text-lg font-medium text-gray-900">{alertTime.time}</h3>
+                    <ul class="space-y-3">
                         {#each alertTime.items as item}
                             <li>
-                                <label class:last-item={isLastTimeLastItem(alertTime, item)}>
+                                <label 
+                                    class="flex items-center space-x-3 group cursor-pointer"
+                                    class:last-item={isLastTimeLastItem(alertTime, item)}
+                                >
                                     <input
                                         type="checkbox"
                                         checked={item.isCompleted}
+                                        class="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"
                                         on:change={() => {
                                             toggleChecklistItem(alertTime.id, item.id);
                                             const currentAlertTime = alertTimes.value.find(at => at.id === alertTime.id);
@@ -187,7 +215,7 @@
                                             }
                                         }}
                                     />
-                                    {item.name}
+                                    <span class="text-gray-700 group-hover:text-gray-900 transition-colors">{item.name}</span>
                                 </label>
                             </li>
                         {/each}
@@ -198,7 +226,11 @@
     {/if}
 </main>
 
-<style>
+<style lang="postcss">
+    @reference "tailwindcss/theme";
+    :global(html) {
+      background-color: theme(--color-gray-100);
+    }
     .completion-animation {
         animation: celebrate 2s ease-in-out;
     }
@@ -212,7 +244,7 @@
     }
 
     .last-item {
-        color: darkgreen;
+        color: var(--color-green-700);
         font-weight: bold;
     }
 </style>

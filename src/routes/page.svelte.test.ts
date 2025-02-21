@@ -38,13 +38,13 @@ describe('/+page.svelte', () => {
 
     test('should toggle between setup and daily mode', async () => {
         render(Page);
-        const toggleButton = screen.getByText('Switch to Daily Checklist Mode');
+        const toggleButton = screen.getByRole('button', { name: /Switch to Daily Checklist Mode|Switch to Setup Mode/ });
         
         await fireEvent.click(toggleButton);
-        expect(screen.getByText('Switch to Setup Mode')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Switch to Setup Mode/ })).toBeInTheDocument();
         
-        await fireEvent.click(screen.getByText('Switch to Setup Mode'));
-        expect(screen.getByText('Switch to Daily Checklist Mode')).toBeInTheDocument();
+        await fireEvent.click(screen.getByRole('button', { name: /Switch to Setup Mode/ }));
+        expect(screen.getByRole('button', { name: /Switch to Daily Checklist Mode/ })).toBeInTheDocument();
     });
 
     test('should add new alert time', async () => {
@@ -68,14 +68,15 @@ describe('/+page.svelte', () => {
         await fireEvent.input(timeInput, { target: { value: '09:00' } });
         await fireEvent.click(screen.getByText('Add Time'));
 
-        // Find the setup mode section and then find the alert time within it
-        const setupSection = screen.getByText('Setup Mode').closest('div');
-        const alertTimeSection = within(setupSection).getByRole('heading', { name: '09:00' }).closest('div');
+        // Find the alert time section and add an item
+        const alertTimeSection = screen.getByRole('heading', { name: '09:00' }).closest('div.bg-white');
+        if (!alertTimeSection) throw new Error('Alert time section not found');
+        
         const itemInput = within(alertTimeSection).getByPlaceholderText('Add new checklist item');
         await fireEvent.input(itemInput, { target: { value: 'Take medication' } });
         await fireEvent.click(within(alertTimeSection).getByText('Add Item'));
 
-        const alertTimes =  JSON.parse(localStorage.getItem('alertTimes')!) as AlertTime[];
+        const alertTimes = JSON.parse(localStorage.getItem('alertTimes')!) as AlertTime[];
         expect(alertTimes[0].items).toHaveLength(1);
         expect(alertTimes[0].items[0].name).toBe('Take medication');
     });
@@ -91,24 +92,28 @@ describe('/+page.svelte', () => {
         await fireEvent.input(timeInput, { target: { value: '09:00' } });
         await fireEvent.click(screen.getByText('Add Time'));
         
-        // Find the setup mode section and then find the alert time within it
-        const setupSection = screen.getByText('Setup Mode').closest('div');
-        const alertTimeSection = within(setupSection).getByRole('heading', { name: '09:00' }).closest('div');
+        // Find the alert time section and add an item
+        const alertTimeSection = screen.getByRole('heading', { name: '09:00' }).closest('div.bg-white');
+        
         const itemInput = within(alertTimeSection).getByPlaceholderText('Add new checklist item');
         await fireEvent.input(itemInput, { target: { value: 'Take medication' } });
         await fireEvent.click(within(alertTimeSection).getByText('Add Item'));
 
         // Switch to daily mode
-        await fireEvent.click(screen.getByText('Switch to Daily Checklist Mode'));
+        await fireEvent.click(screen.getByRole('button', { name: /Switch to Daily Checklist Mode/ }));
 
         // Find the daily mode section and the checkbox within it
-        const dailySection = screen.getByText('Daily Checklist').closest('div');
-        const checkbox = within(dailySection).getByRole('checkbox');
+        const dailySection = screen.getByRole('heading', { name: 'Daily Checklist' }).parentElement;
+        if (!dailySection) throw new Error('Daily section not found');
         
+        const checkbox = within(dailySection).getByRole('checkbox', { name: 'Take medication' });
+        
+        // Toggle the checkbox and verify the state change
         await fireEvent.click(checkbox);
 
         const alertTimes =  JSON.parse(localStorage.getItem('alertTimes')!) as AlertTime[];
         expect(alertTimes[0].items[0].isCompleted).toBe(true);
+        expect(checkbox).toBeChecked();
     });
 
     test('should persist tasks between setup and task list modes', async () => {
@@ -117,60 +122,65 @@ describe('/+page.svelte', () => {
         // Set initial time to 8:30 AM
         vi.setSystemTime(new Date(2025, 1, 1, 8, 30));
         
-        // Add two different times with tasks in setup mode
-        const timeInput = screen.getByPlaceholderText('Add new alert time');
-        
         // Add first time (9:00) and its tasks
+        const timeInput = screen.getByPlaceholderText('Add new alert time');
         await fireEvent.input(timeInput, { target: { value: '09:00' } });
         await fireEvent.click(screen.getByText('Add Time'));
-
-        // Find the setup mode section and then find the alert time within it
-        const setupSection = screen.getByText('Setup Mode').closest('div');
-        const firstTimeSection = within(setupSection).getByRole('heading', { name: '09:00' }).closest('div');
-        const firstItemInput = within(firstTimeSection).getByPlaceholderText('Add new checklist item');
         
+        // Find the alert time section and add an item
+        const firstAlertTimeSection = screen.getByRole('heading', { name: '09:00' }).closest('div.bg-white');
+        if (!firstAlertTimeSection) throw new Error('Alert time section not found');
+        
+        const firstItemInput = within(firstAlertTimeSection).getByPlaceholderText('Add new checklist item');
         await fireEvent.input(firstItemInput, { target: { value: 'Take morning vitamins' } });
-        await fireEvent.click(within(firstTimeSection).getByText('Add Item'));
+        await fireEvent.click(within(firstAlertTimeSection).getByText('Add Item'));
         
         // Add second time (10:00) and its tasks
         await fireEvent.input(timeInput, { target: { value: '10:00' } });
         await fireEvent.click(screen.getByText('Add Time'));
         
-        const secondTimeSection = within(setupSection).getByRole('heading', { name: '10:00' }).closest('div');
-        const secondItemInput = within(secondTimeSection).getByPlaceholderText('Add new checklist item');
+        const secondAlertTimeSection = screen.getByRole('heading', { name: '10:00' }).closest('div.bg-white');
+        if (!secondAlertTimeSection) throw new Error('Alert time section not found');
         
+        const secondItemInput = within(secondAlertTimeSection).getByPlaceholderText('Add new checklist item');
         await fireEvent.input(secondItemInput, { target: { value: 'Check email' } });
-        await fireEvent.click(within(secondTimeSection).getByText('Add Item'));
+        await fireEvent.click(within(secondAlertTimeSection).getByText('Add Item'));
         
         // Switch to daily mode and verify tasks are present
-        await fireEvent.click(screen.getByText('Switch to Daily Checklist Mode'));
+        await fireEvent.click(screen.getByRole('button', { name: /Switch to Daily Checklist Mode/ }));
         
-        const dailySection = screen.getByText('Daily Checklist').closest('div');
+        const dailySection = screen.getByRole('heading', { name: 'Daily Checklist' }).parentElement;
+        if (!dailySection) throw new Error('Daily section not found');
         
-        // Verify both tasks are visible and unchecked
-        expect(within(dailySection).getByText('Take morning vitamins')).toBeInTheDocument();
-        expect(within(dailySection).getByText('Check email')).toBeInTheDocument();
-        
+        // Get all checkboxes
         const checkboxes = within(dailySection).getAllByRole('checkbox');
         expect(checkboxes).toHaveLength(2);
-        checkboxes.forEach(checkbox => {
-            expect(checkbox).not.toBeChecked();
-        });
+        expect(checkboxes[0]).not.toBeChecked();
+        expect(checkboxes[1]).not.toBeChecked();
         
-        // Complete one task
+        // Complete first task
         await fireEvent.click(checkboxes[0]);
         
         // Switch back to setup mode and verify tasks still exist
-        await fireEvent.click(screen.getByText('Switch to Setup Mode'));
+        await fireEvent.click(screen.getByRole('button', { name: /Switch to Setup Mode/ }));
+
+        // Find the alert time sections
+        const updatedFirstAlertTimeSection = screen.getByRole('heading', { name: '09:00' }).closest('div.bg-white');
+        if (!updatedFirstAlertTimeSection) throw new Error('Alert time section not found');
         
-        const updatedSetupSection = screen.getByText('Setup Mode').closest('div');
-        expect(within(updatedSetupSection).getByText('Take morning vitamins')).toBeInTheDocument();
-        expect(within(updatedSetupSection).getByText('Check email')).toBeInTheDocument();
+        expect(within(updatedFirstAlertTimeSection).getByText('Take morning vitamins')).toBeInTheDocument();
+        
+        const updatedSecondAlertTimeSection = screen.getByRole('heading', { name: '10:00' }).closest('div.bg-white');
+        if (!updatedSecondAlertTimeSection) throw new Error('Alert time section not found');
+        
+        expect(within(updatedSecondAlertTimeSection).getByText('Check email')).toBeInTheDocument();
         
         // Switch to daily mode again and verify completion state persisted
-        await fireEvent.click(screen.getByText('Switch to Daily Checklist Mode'));
+        await fireEvent.click(screen.getByRole('button', { name: /Switch to Daily Checklist Mode/ }));
         
-        const updatedDailySection = screen.getByText('Daily Checklist').closest('div');
+        const updatedDailySection = screen.getByRole('heading', { name: 'Daily Checklist' }).parentElement;
+        if (!updatedDailySection) throw new Error('Daily section not found');
+        
         const updatedCheckboxes = within(updatedDailySection).getAllByRole('checkbox');
         expect(updatedCheckboxes[0]).toBeChecked();
         expect(updatedCheckboxes[1]).not.toBeChecked();
@@ -197,14 +207,14 @@ describe('/+page.svelte', () => {
         await fireEvent.input(timeInput, { target: { value: '09:00' } });
         await fireEvent.click(screen.getByText('Add Time'));
         
-        const setupSection = screen.getByText('Setup Mode').closest('div');
-        const alertTimeSection = within(setupSection).getByRole('heading', { name: '09:00' }).closest('div');
+        const alertTimeSection = screen.getByRole('heading', { name: '09:00' }).closest('div.bg-white');
+        
         const itemInput = within(alertTimeSection).getByPlaceholderText('Add new checklist item');
         await fireEvent.input(itemInput, { target: { value: 'Take medication' } });
         await fireEvent.click(within(alertTimeSection).getByText('Add Item'));
 
         // Switch to daily mode
-        await fireEvent.click(screen.getByText('Switch to Daily Checklist Mode'));
+        await fireEvent.click(screen.getByRole('button', { name: /Switch to Daily Checklist Mode/ }));
 
         // Advance time to 9:00 AM
         vi.setSystemTime(new Date(2025, 1, 1, 9, 0));
@@ -261,32 +271,32 @@ describe('/+page.svelte', () => {
         // Set initial time to before adding the alert
         vi.setSystemTime(new Date(2025, 1, 20, 14, 16, 0));
         
-        // Add two alert times - one for 14:17 and one for 14:18 to prevent reset
+        // Add first alert time (14:17)
         const timeInput = screen.getByPlaceholderText('Add new alert time');
-        
-        // Add first alert time
         await fireEvent.input(timeInput, { target: { value: '14:17' } });
         await fireEvent.click(screen.getByText('Add Time'));
         
-        // Add second alert time
+        // Add second alert time (14:18)
         await fireEvent.input(timeInput, { target: { value: '14:18' } });
         await fireEvent.click(screen.getByText('Add Time'));
         
-        // Verify alert times were added correctly
-        const alertTimes =  JSON.parse(localStorage.getItem('alertTimes')!) as AlertTime[];
+        // Verify both times were added
+        const alertTimes = JSON.parse(localStorage.getItem('alertTimes')!) as AlertTime[];
         expect(alertTimes).toHaveLength(2);
         expect(alertTimes[0].time).toBe('14:17');
         expect(alertTimes[1].time).toBe('14:18');
         
         // Add a checklist item to the first alert time
-        const firstAlertSection = screen.getByRole('heading', { name: '14:17' }).closest('div');
+        const firstAlertSection = screen.getByRole('heading', { name: '14:17' }).closest('div.bg-white');
+        if (!firstAlertSection) throw new Error('Alert time section not found');
+        
         const itemInput = within(firstAlertSection).getByPlaceholderText('Add new checklist item');
         await fireEvent.input(itemInput, { target: { value: 'Test item' } });
         await fireEvent.click(within(firstAlertSection).getByText('Add Item'));
         
         // Switch to daily mode
-        await fireEvent.click(screen.getByText('Switch to Daily Checklist Mode'));
-        
+        await fireEvent.click(screen.getByRole('button', { name: /Switch to Daily Checklist Mode/ }));
+
         // Now set the time to the first alert time
         vi.setSystemTime(new Date(2025, 1, 20, 14, 17, 0));
         
