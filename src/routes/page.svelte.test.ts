@@ -1,10 +1,11 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import { render, screen, within, fireEvent } from '@testing-library/svelte';
-import { get } from 'svelte/store';
 import Page from './+page.svelte';
 import { appStore } from '$lib/store';
 import * as audio from '$lib/audio';
+import { localStore } from '$lib/localStore.svelte';
+import type { AlertTime } from '$lib/types';
 
 // Set up spies for audio functions
 const audioSpies = {
@@ -55,9 +56,9 @@ describe('/+page.svelte', () => {
         await fireEvent.input(timeInput, { target: { value: '09:00' } });
         await fireEvent.click(addButton);
 
-        const store = get(appStore);
-        expect(store.alertTimes).toHaveLength(1);
-        expect(store.alertTimes[0].time).toBe('09:00');
+        const alertTimes = JSON.parse(localStorage.getItem('alertTimes')!) as AlertTime[];
+        expect(alertTimes).toHaveLength(1);
+        expect(alertTimes[0].time).toBe('09:00');
     });
 
     test('should add checklist item to alert time', async () => {
@@ -75,9 +76,9 @@ describe('/+page.svelte', () => {
         await fireEvent.input(itemInput, { target: { value: 'Take medication' } });
         await fireEvent.click(within(alertTimeSection).getByText('Add Item'));
 
-        const updatedStore = get(appStore);
-        expect(updatedStore.alertTimes[0].items).toHaveLength(1);
-        expect(updatedStore.alertTimes[0].items[0].name).toBe('Take medication');
+        const alertTimes =  JSON.parse(localStorage.getItem('alertTimes')!) as AlertTime[];
+        expect(alertTimes[0].items).toHaveLength(1);
+        expect(alertTimes[0].items[0].name).toBe('Take medication');
     });
 
     test('should toggle item completion in daily mode', async () => {
@@ -107,8 +108,8 @@ describe('/+page.svelte', () => {
         
         await fireEvent.click(checkbox);
 
-        const store = get(appStore);
-        expect(store.alertTimes[0].items[0].isCompleted).toBe(true);
+        const alertTimes =  JSON.parse(localStorage.getItem('alertTimes')!) as AlertTime[];
+        expect(alertTimes[0].items[0].isCompleted).toBe(true);
     });
 
     test('should persist tasks between setup and task list modes', async () => {
@@ -176,14 +177,14 @@ describe('/+page.svelte', () => {
         expect(updatedCheckboxes[1]).not.toBeChecked();
         
         // Verify store state directly
-        const store = get(appStore);
-        expect(store.alertTimes).toHaveLength(2);
-        expect(store.alertTimes[0].time).toBe('09:00');
-        expect(store.alertTimes[0].items[0].name).toBe('Take morning vitamins');
-        expect(store.alertTimes[0].items[0].isCompleted).toBe(true);
-        expect(store.alertTimes[1].time).toBe('10:00');
-        expect(store.alertTimes[1].items[0].name).toBe('Check email');
-        expect(store.alertTimes[1].items[0].isCompleted).toBe(false);
+        const alertTimes =  JSON.parse(localStorage.getItem('alertTimes')!) as AlertTime[];
+        expect(alertTimes).toHaveLength(2);
+        expect(alertTimes[0].time).toBe('09:00');
+        expect(alertTimes[0].items[0].name).toBe('Take morning vitamins');
+        expect(alertTimes[0].items[0].isCompleted).toBe(true);
+        expect(alertTimes[1].time).toBe('10:00');
+        expect(alertTimes[1].items[0].name).toBe('Check email');
+        expect(alertTimes[1].items[0].isCompleted).toBe(false);
     });
 
     test('should only alert once per minute when time matches', async () => {
@@ -240,14 +241,74 @@ describe('/+page.svelte', () => {
         Object.values(audioSpies).forEach(spy => spy.mockClear());
 
         // Go to next alert time
-        vi.setSystemTime(new Date(2025, 1, 1, 9, 0));
+        vi.setSystemTime(new Date(2025, 1, 1, 8, 59));
         vi.advanceTimersByTime(24 * 60 * 60 * 1000); // Advance 24 hours
 
-        // Wait for the setTimeout in announceItems
+        // Wait for the timer reset for the day
         await vi.advanceTimersByTimeAsync(50);
+
+        vi.advanceTimersByTime(60 * 1000); // Advance 1 minute
+        
+        // wait for announcement 
+        await vi.advanceTimersByTimeAsync(50);
+
+// actually i think this fails because our logic for resetting only kicks in if the timestamp is 30 minutes after the last one
+// and i think this is a side effect of storing only hour:minute and not timestamp. this is sorta messy and problematic
+// for midnight-type alerts but maybe not a problem in reality?
+//
+// what we should actually store: the alert timestamp in full?
+// and when we should reset: at midnight? or manually by clicking a "reset" button?
 
         // Verify alerts play again for the next day
         expect(audioSpies.playAlert).toHaveBeenCalledTimes(1);
         expect(audioSpies.speak).toHaveBeenCalledTimes(1);
+    });
+
+    test('should update lastAnnouncedTime when alert fires', async () => {
+        render(Page);
+        
+        // Set initial time to before adding the alert
+        vi.setSystemTime(new Date(2025, 1, 20, 14, 16, 0));
+        
+        // Add two alert times - one for 14:17 and one for 14:18 to prevent reset
+        const timeInput = screen.getByPlaceholderText('Add new alert time');
+        
+        // Add first alert time
+        await fireEvent.input(timeInput, { target: { value: '14:17' } });
+        await fireEvent.click(screen.getByText('Add Time'));
+        
+        // Add second alert time
+        await fireEvent.input(timeInput, { target: { value: '14:18' } });
+        await fireEvent.click(screen.getByText('Add Time'));
+        
+        // Verify alert times were added correctly
+        const alertTimes =  JSON.parse(localStorage.getItem('alertTimes')!) as AlertTime[];
+        expect(alertTimes).toHaveLength(2);
+        expect(alertTimes[0].time).toBe('14:17');
+        expect(alertTimes[1].time).toBe('14:18');
+        
+        // Add a checklist item to the first alert time
+        const firstAlertSection = screen.getByRole('heading', { name: '14:17' }).closest('div');
+        const itemInput = within(firstAlertSection).getByPlaceholderText('Add new checklist item');
+        await fireEvent.input(itemInput, { target: { value: 'Test item' } });
+        await fireEvent.click(within(firstAlertSection).getByText('Add Item'));
+        
+        // Switch to daily mode
+        await fireEvent.click(screen.getByText('Switch to Daily Checklist Mode'));
+        
+        // Now set the time to the first alert time
+        vi.setSystemTime(new Date(2025, 1, 20, 14, 17, 0));
+        
+        // Run the interval check
+        await vi.advanceTimersByTime(1000);
+        
+        // Get fresh store state
+        const lastAnnouncedTime = JSON.parse(localStorage.getItem('lastAnnouncedTime')!) as string;
+        expect(lastAnnouncedTime).toBe('14:17');
+        expect(audioSpies.playAlert).toHaveBeenCalled();
+        
+        // Verify the alert doesn't fire again
+        await vi.advanceTimersByTime(1000);
+        expect(audioSpies.playAlert).toHaveBeenCalledTimes(1);
     });
 });

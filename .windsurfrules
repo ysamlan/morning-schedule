@@ -33,3 +33,8 @@ Documentation
 
 Tooling
 - Use pnpm.
+
+Testing
+- Use Playwright for end-to-end testing and vitest for unit tests.
+- When adding functionality, consider adding a new test or updating existing tests when appropriate.
+- Run any tests you write using `pnpm test` to verify your functionality and test are correct.

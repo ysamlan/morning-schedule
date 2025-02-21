@@ -87,10 +87,13 @@ function createAppStore() {
                     : at
             )
         })),
-        setLastAnnouncedTime: (time: string) => update(state => ({
-            ...state,
-            lastAnnouncedTime: time
-        })),
+        setLastAnnouncedTime: (time: string) => update(state => {
+            // Create a completely new state object to ensure reactivity
+            return {
+                ...state,
+                lastAnnouncedTime: time
+            };
+        }),
         resetChecklist: () => update(state => ({
             ...state,
             alertTimes: state.alertTimes.map(at => ({

@@ -1,8 +1,13 @@
 <script lang="ts">
-    import { appStore } from '$lib/store';
+    import { localStore } from '$lib/localStore.svelte';
     import type { AlertTime, ChecklistItem } from '$lib/types';
     import { onMount, onDestroy } from 'svelte';
     import { playAlert, playSuccess, speak, cancelSpeech } from '$lib/audio';
+    import { differenceInMinutes } from 'date-fns';
+
+    let alertTimes = localStore('alertTimes', [] as AlertTime[]);
+    let isSetupMode = localStore('isSetupMode', true);
+    let lastAnnouncedTime = localStore('lastAnnouncedTime', '');
     
     let newTime = '';
     let newItemName: { [key: string]: string } = {};
@@ -10,27 +15,41 @@
 
     function handleAddTime() {
         if (newTime) {
-            appStore.addAlertTime(newTime);
+            alertTimes.value.push({ id: crypto.randomUUID(), time: newTime, items: [] });
             newTime = '';
         }
     }
 
     function handleAddItem(alertTimeId: string) {
         if (newItemName[alertTimeId]) {
-            appStore.addChecklistItem(alertTimeId, newItemName[alertTimeId]);
+            alertTimes.value.find(at => at.id === alertTimeId)!.items.push({
+                id: crypto.randomUUID(),
+                name: newItemName[alertTimeId],
+                isCompleted: false
+            });
             newItemName[alertTimeId] = '';
         }
     }
 
-    function checkLastAlertTime(): boolean {
-        if (!$appStore.alertTimes.length) return false;
-        const lastTime = $appStore.alertTimes[$appStore.alertTimes.length - 1].time;
+    function toggleChecklistItem(alertTimeId: string, itemId: string) {
+        alertTimes.value = alertTimes.value.map(at => 
+            at.id === alertTimeId ? { ...at, items: at.items.map(item => 
+                item.id === itemId ? { ...item, isCompleted: !item.isCompleted } : item
+            )} : at
+        );
+    }
+
+    /**
+     * Returns true if it's time to reset for the day (30 minutes after the last alert time)
+     */
+    function isTimeToReset(): boolean {
+        if (!alertTimes.value.length) return false;
+        const lastTime = alertTimes.value[alertTimes.value.length - 1].time;
         const now = new Date();
         const [hours, minutes] = lastTime.split(':').map(Number);
-        const lastTimeDate = new Date();
-        lastTimeDate.setHours(hours, minutes, 0, 0);
-        return now > lastTimeDate;
-    }
+        const lastTimeDate = new Date().setHours(hours, minutes, 0, 0);
+        return differenceInMinutes(now, lastTimeDate) === 30;
+}
 
     function isTimeMatch(alertTime: AlertTime): boolean {
         const now = new Date();
@@ -48,18 +67,18 @@
     }
 
     function checkTimes() {
-        if ($appStore.isSetupMode) return;
+        if (isSetupMode.value) return;
 
-        $appStore.alertTimes.forEach(alertTime => {
-            if (isTimeMatch(alertTime) && $appStore.lastAnnouncedTime !== alertTime.time) {
-                appStore.setLastAnnouncedTime(alertTime.time);
+        alertTimes.value.forEach(alertTime => {
+            if (isTimeMatch(alertTime) && lastAnnouncedTime.value !== alertTime.time) {
+                lastAnnouncedTime.value = alertTime.time;
                 announceItems(alertTime);
             }
         });
     }
 
     function isLastTimeLastItem(alertTime: AlertTime, item: ChecklistItem): boolean {
-        const lastTime = $appStore.alertTimes[$appStore.alertTimes.length - 1];
+        const lastTime = alertTimes.value[alertTimes.value.length - 1];
         return alertTime.id === lastTime.id && 
                item.id === alertTime.items[alertTime.items.length - 1]?.id;
     }
@@ -73,17 +92,26 @@
         cancelSpeech();
     });
 
-    $: if (!$appStore.isSetupMode && checkLastAlertTime()) {
-        appStore.resetChecklist();
+    // TODO only reset if we haven't already for the day (this matters once we start tracking daily stats)
+    $: if (!isSetupMode.value && isTimeToReset()) {
+        alertTimes.value.map(at => at.items.map(item => item.isCompleted = false));
+        lastAnnouncedTime.value= '';
     }
+
+
+	function setCompletionAnimation(alertTimeId: string, show: boolean) {
+		alertTimes.value = alertTimes.value.map(at => 
+			at.id === alertTimeId ? { ...at, showCompletionAnimation: show } : at
+		);
+	}
 </script>
 
 <main>
-    <button on:click={() => appStore.toggleMode()}>
-        Switch to {$appStore.isSetupMode ? 'Daily Checklist' : 'Setup'} Mode
+    <button on:click={() => isSetupMode.value = !isSetupMode.value}>
+        Switch to {isSetupMode.value ? 'Daily Checklist' : 'Setup'} Mode
     </button>
 
-    {#if $appStore.isSetupMode}
+    {#if isSetupMode.value}
         <div>
             <h2>Setup Mode</h2>
             <div>
@@ -95,10 +123,12 @@
                 <button on:click={handleAddTime}>Add Time</button>
             </div>
 
-            {#each $appStore.alertTimes as alertTime}
+            {#each alertTimes.value as alertTime}
                 <div>
                     <h3>{alertTime.time}</h3>
-                    <button on:click={() => appStore.removeAlertTime(alertTime.id)}>
+                    <button on:click={() => 
+                            alertTimes.value = alertTimes.value.filter(at => at.id !== alertTime.id)
+                        }>
                         Remove Time
                     </button>
                     
@@ -117,7 +147,9 @@
                         {#each alertTime.items as item}
                             <li>
                                 {item.name}
-                                <button on:click={() => appStore.removeChecklistItem(alertTime.id, item.id)}>
+                                <button on:click={() => 
+                                    alertTime.items = alertTime.items.filter(i => i.id !== item.id)
+                                }>
                                     Remove
                                 </button>
                             </li>
@@ -129,7 +161,7 @@
     {:else}
         <div>
             <h2>Daily Checklist</h2>
-            {#each $appStore.alertTimes as alertTime}
+            {#each alertTimes.value as alertTime}
                 <div class:completion-animation={alertTime.showCompletionAnimation}>
                     <h3>{alertTime.time}</h3>
                     <ul>
@@ -140,14 +172,14 @@
                                         type="checkbox"
                                         checked={item.isCompleted}
                                         on:change={() => {
-                                            appStore.toggleChecklistItem(alertTime.id, item.id);
-                                            const currentAlertTime = $appStore.alertTimes.find(at => at.id === alertTime.id);
+                                            toggleChecklistItem(alertTime.id, item.id);
+                                            const currentAlertTime = alertTimes.value.find(at => at.id === alertTime.id);
                                             if (currentAlertTime?.items.every(i => i.isCompleted)) {
                                                 playSuccess();
-                                                appStore.setCompletionAnimation(alertTime.id, true);
+                                                setCompletionAnimation(alertTime.id, true);
                                                 speak("Great job! You've completed all tasks for this time!");
                                                 setTimeout(() => {
-                                                    appStore.setCompletionAnimation(alertTime.id, false);
+                                                    setCompletionAnimation(alertTime.id, false);
                                                 }, 2000);
                                             }
                                         }}
