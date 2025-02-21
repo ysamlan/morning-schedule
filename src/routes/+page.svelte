@@ -3,11 +3,11 @@
     import type { AlertTime, ChecklistItem } from '$lib/types';
     import { onMount, onDestroy } from 'svelte';
     import { playAlert, playSuccess, speak, cancelSpeech } from '$lib/audio';
-    import { differenceInMinutes } from 'date-fns';
 
     let alertTimes = localStore('alertTimes', [] as AlertTime[]);
     let isSetupMode = localStore('isSetupMode', true);
     let lastAnnouncedTime = localStore('lastAnnouncedTime', '');
+    let lastAnnouncedDate = localStore('lastAnnouncedDate', '');
     
     let newTime = '';
     let newItemName: { [key: string]: string } = {};
@@ -40,16 +40,13 @@
     }
 
     /**
-     * Returns true if it's time to reset for the day (30 minutes after the last alert time)
+     * Returns true if we've changed days since our last alert fired
      */
     function isTimeToReset(): boolean {
-        if (!alertTimes.value.length) return false;
-        const lastTime = alertTimes.value[alertTimes.value.length - 1].time;
-        const now = new Date();
-        const [hours, minutes] = lastTime.split(':').map(Number);
-        const lastTimeDate = new Date().setHours(hours, minutes, 0, 0);
-        return differenceInMinutes(now, lastTimeDate) === 30;
-}
+        if (!lastAnnouncedDate.value) return false;
+        const today = new Date().toISOString().split('T')[0];
+        return lastAnnouncedDate.value != today;
+    }
 
     function isTimeMatch(alertTime: AlertTime): boolean {
         const now = new Date();
@@ -69,8 +66,19 @@
     function checkTimes() {
         if (isSetupMode.value) return;
 
+        // Reset items for a new day when needed
+        if (isTimeToReset()) {
+            alertTimes.value = alertTimes.value.map(at => ({
+                ...at,
+                items: at.items.map(item => ({ ...item, isCompleted: false }))
+            }));
+            lastAnnouncedTime.value = '';
+            lastAnnouncedDate.value = '';
+        }
+
         alertTimes.value.forEach(alertTime => {
             if (isTimeMatch(alertTime) && lastAnnouncedTime.value !== alertTime.time) {
+                lastAnnouncedDate.value = new Date().toISOString().split('T')[0];
                 lastAnnouncedTime.value = alertTime.time;
                 announceItems(alertTime);
             }
@@ -92,18 +100,13 @@
         cancelSpeech();
     });
 
-    // TODO only reset if we haven't already for the day (this matters once we start tracking daily stats)
-    $: if (!isSetupMode.value && isTimeToReset()) {
-        alertTimes.value.map(at => at.items.map(item => item.isCompleted = false));
-        lastAnnouncedTime.value= '';
+
+
+    function setCompletionAnimation(alertTimeId: string, show: boolean) {
+        alertTimes.value = alertTimes.value.map(at => 
+            at.id === alertTimeId ? { ...at, showCompletionAnimation: show } : at
+        );
     }
-
-
-	function setCompletionAnimation(alertTimeId: string, show: boolean) {
-		alertTimes.value = alertTimes.value.map(at => 
-			at.id === alertTimeId ? { ...at, showCompletionAnimation: show } : at
-		);
-	}
 </script>
 
 <main>

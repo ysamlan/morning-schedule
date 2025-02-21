@@ -31,3 +31,18 @@ export class LocalStore<T> {
 export function localStore<T>(key: string, value: T) {
   return new LocalStore(key, value);
 }
+
+// Add type declaration for clearData
+declare module './localStore.svelte' {
+  interface LocalStoreFn {
+    <T>(key: string, value: T): LocalStore<T>;
+    clearData: () => void;
+  }
+}
+
+// Add static method to clear all localStorage data - useful for testing
+localStore.clearData = () => {
+  if (browser) {
+    localStorage.clear();
+  }
+};

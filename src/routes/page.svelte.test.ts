@@ -2,7 +2,6 @@ import { describe, test, expect, beforeEach, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import { render, screen, within, fireEvent } from '@testing-library/svelte';
 import Page from './+page.svelte';
-import { appStore } from '$lib/store';
 import * as audio from '$lib/audio';
 import { localStore } from '$lib/localStore.svelte';
 import type { AlertTime } from '$lib/types';
@@ -24,7 +23,7 @@ vi.stubGlobal('crypto', {
 describe('/+page.svelte', () => {
     beforeEach(() => {
         // Reset store to initial state and ID counter
-        appStore.clearData();
+        localStore.clearData();
         mockIdCounter = 0;
         vi.useFakeTimers();
         // Reset all spies
@@ -240,24 +239,16 @@ describe('/+page.svelte', () => {
         // Reset spy call counts
         Object.values(audioSpies).forEach(spy => spy.mockClear());
 
+        // Go to the next day, wait for the timer reset, and verify the next day's alerts fire
         // Go to next alert time
-        vi.setSystemTime(new Date(2025, 1, 1, 8, 59));
-        vi.advanceTimersByTime(24 * 60 * 60 * 1000); // Advance 24 hours
-
+        vi.setSystemTime(new Date(2025, 1, 2, 8, 59));
         // Wait for the timer reset for the day
         await vi.advanceTimersByTimeAsync(50);
+        vi.setSystemTime(new Date(2025, 1, 2, 9, 0));
+        vi.advanceTimersByTime(1000);
 
-        vi.advanceTimersByTime(60 * 1000); // Advance 1 minute
-        
         // wait for announcement 
         await vi.advanceTimersByTimeAsync(50);
-
-// actually i think this fails because our logic for resetting only kicks in if the timestamp is 30 minutes after the last one
-// and i think this is a side effect of storing only hour:minute and not timestamp. this is sorta messy and problematic
-// for midnight-type alerts but maybe not a problem in reality?
-//
-// what we should actually store: the alert timestamp in full?
-// and when we should reset: at midnight? or manually by clicking a "reset" button?
 
         // Verify alerts play again for the next day
         expect(audioSpies.playAlert).toHaveBeenCalledTimes(1);
