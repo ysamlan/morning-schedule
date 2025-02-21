@@ -30,14 +30,22 @@ export async function playSuccess(): Promise<void> {
     setTimeout(() => playAlert(1320, 0.2), 100);
 }
 
-// Speak text using the Web Speech API
-export function speak(text: string): void {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 0.9; // Slightly slower for better clarity
-        utterance.pitch = 1.0;
-        window.speechSynthesis.speak(utterance);
-    }
+// Import our enhanced TTS service
+import { speak as ttsSpeak, initializeVits } from './tts';
+
+// Initialize TTS on module load
+if (typeof window !== 'undefined') {
+    initializeVits().catch(console.error);
+}
+
+// Speak text using our enhanced TTS service with vits-web and browser fallback
+export async function speak(text: string): Promise<void> {
+    await ttsSpeak({ 
+        text,
+        rate: 0.9, // Slightly slower for better clarity
+        pitch: 1.0,
+        volume: 1.0
+    });
 }
 
 // Cancel any ongoing speech

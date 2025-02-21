@@ -83,7 +83,9 @@
         if (incompleteItems.length > 0) {
             playAlert();
             const itemText = incompleteItems.map(item => item.name).join(', ');
-            speak(`Time for ${alertTime.time}. You need to: ${itemText}`);
+            speak(`Time for ${alertTime.time}. You need to: ${itemText}`).catch(error => {
+                console.error('Failed to speak:', error);
+            });
         }
     }
 
