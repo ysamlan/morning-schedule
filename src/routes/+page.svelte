@@ -10,6 +10,7 @@
     let lastAnnouncedDate = localStore('lastAnnouncedDate', '');
     
     let newTime = '';
+    let editingTimeId = '';
     let newItemName: { [key: string]: string } = {};
     let checkInterval: number;
 
@@ -17,6 +18,20 @@
         if (newTime) {
             alertTimes.value.push({ id: crypto.randomUUID(), time: newTime, items: [] });
             newTime = '';
+        }
+    }
+
+    function handleEditTime(alertTimeId: string) {
+        if (newTime && editingTimeId === alertTimeId) {
+            alertTimes.value = alertTimes.value.map(at => 
+                at.id === alertTimeId ? { ...at, time: newTime } : at
+            );
+            newTime = '';
+            editingTimeId = '';
+        } else {
+            const time = alertTimes.value.find(at => at.id === alertTimeId)?.time || '';
+            newTime = time;
+            editingTimeId = alertTimeId;
         }
     }
 
@@ -142,7 +157,31 @@
             {#each alertTimes.value as alertTime}
                 <div class="bg-white shadow rounded-lg p-6 space-y-4">
                     <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-medium text-gray-900">{alertTime.time}</h3>
+                        {#if editingTimeId === alertTime.id}
+                            <div class="flex gap-2">
+                                <input
+                                    type="time"
+                                    bind:value={newTime}
+                                    class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-48 sm:text-sm border-gray-300 rounded-md"
+                                />
+                                <button 
+                                    on:click={() => handleEditTime(alertTime.id)}
+                                    class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                >
+                                    Save
+                                </button>
+                            </div>
+                        {:else}
+                            <div class="flex gap-2 items-center">
+                                <h3 class="text-lg font-medium text-gray-900">{alertTime.time}</h3>
+                                <button 
+                                    on:click={() => handleEditTime(alertTime.id)}
+                                    class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                >
+                                    Edit
+                                </button>
+                            </div>
+                        {/if}
                         <button 
                             on:click={() => alertTimes.value = alertTimes.value.filter(at => at.id !== alertTime.id)}
                             class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"

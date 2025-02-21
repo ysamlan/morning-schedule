@@ -81,6 +81,31 @@ describe('/+page.svelte', () => {
         expect(alertTimes[0].items[0].name).toBe('Take medication');
     });
 
+    test('should edit alert time', async () => {
+        render(Page);
+        
+        // First add an alert time
+        const timeInput = screen.getByPlaceholderText('Add new alert time');
+        await fireEvent.input(timeInput, { target: { value: '09:00' } });
+        await fireEvent.click(screen.getByText('Add Time'));
+
+        // Click edit button and verify edit mode is active
+        const editButton = screen.getByText('Edit');
+        await fireEvent.click(editButton);
+        
+        // Find the time input in edit mode and update the time
+        const timeInputs = screen.getAllByDisplayValue('09:00');
+        const editTimeInput = timeInputs.find(input => !input.hasAttribute('placeholder'));
+        if (!editTimeInput) throw new Error('Edit time input not found');
+        await fireEvent.input(editTimeInput, { target: { value: '10:00' } });
+        await fireEvent.click(screen.getByText('Save'));
+
+        // Verify the time was updated
+        const alertTimes = JSON.parse(localStorage.getItem('alertTimes')!) as AlertTime[];
+        expect(alertTimes[0].time).toBe('10:00');
+        expect(screen.getByText('10:00')).toBeInTheDocument();
+    });
+
     test('should toggle item completion in daily mode', async () => {
         render(Page);
         
@@ -126,7 +151,7 @@ describe('/+page.svelte', () => {
         const timeInput = screen.getByPlaceholderText('Add new alert time');
         await fireEvent.input(timeInput, { target: { value: '09:00' } });
         await fireEvent.click(screen.getByText('Add Time'));
-        
+
         // Find the alert time section and add an item
         const firstAlertTimeSection = screen.getByRole('heading', { name: '09:00' }).closest('div.bg-white');
         if (!firstAlertTimeSection) throw new Error('Alert time section not found');
