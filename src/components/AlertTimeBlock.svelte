@@ -12,6 +12,7 @@
     export let onAddItem: (id: string) => void;
     export let onToggleItem: (timeId: string, itemId: string) => void;
     export let onRemoveItem: (timeId: string, itemId: string) => void;
+    export let onManualAlert: (alertTime: AlertTime) => void;
 </script>
 
 <div class="bg-white shadow rounded-lg p-6 space-y-4">
@@ -39,6 +40,13 @@
                         class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     >
                         Edit
+                    </button>
+                {:else}
+                    <button 
+                        on:click={() => onManualAlert(alertTime)}
+                        class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    >
+                        Run Alert
                     </button>
                 {/if}
             </div>

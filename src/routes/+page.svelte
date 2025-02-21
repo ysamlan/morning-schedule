@@ -143,6 +143,7 @@
                 onAddItem={handleAddItem}
                 onToggleItem={toggleChecklistItem}
                 onRemoveItem={handleRemoveItem}
+                onManualAlert={announceItems}
             />
         {/each}
 
