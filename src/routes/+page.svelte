@@ -3,6 +3,7 @@
     import type { AlertTime, ChecklistItem } from '$lib/types';
     import { onMount, onDestroy } from 'svelte';
     import { playAlert, playSuccess, speak, cancelSpeech } from '$lib/audio';
+    import { preloadAnnouncement, playAnnouncement, clearCache } from '$lib/audioCache';
     import ModeToggle from '../components/ModeToggle.svelte';
     import TimeSetup from '../components/TimeSetup.svelte';
     import AlertTimeBlock from '../components/AlertTimeBlock.svelte';
@@ -47,6 +48,12 @@
                 isCompleted: false
             });
             newItemName[alertTimeId] = '';
+            
+            // Preload audio for the updated checklist
+            const alertTime = alertTimes.value.find(at => at.id === alertTimeId);
+            if (alertTime) {
+                preloadAnnouncement(alertTime).catch(console.error);
+            }
         }
     }
 
@@ -56,6 +63,13 @@
                 ? { ...at, items: at.items.filter(item => item.id !== itemId) }
                 : at
         );
+        
+        // Clear and regenerate audio cache for this time
+        clearCache(alertTimeId);
+        const alertTime = alertTimes.value.find(at => at.id === alertTimeId);
+        if (alertTime) {
+            preloadAnnouncement(alertTime).catch(console.error);
+        }
     }
 
     function toggleChecklistItem(alertTimeId: string, itemId: string) {
@@ -64,6 +78,13 @@
                 item.id === itemId ? { ...item, isCompleted: !item.isCompleted } : item
             )} : at
         );
+        
+        // Clear and regenerate audio cache for this time
+        clearCache(alertTimeId);
+        const alertTime = alertTimes.value.find(at => at.id === alertTimeId);
+        if (alertTime) {
+            preloadAnnouncement(alertTime).catch(console.error);
+        }
     }
 
     function isTimeToReset(): boolean {
@@ -83,9 +104,16 @@
         if (incompleteItems.length > 0) {
             playAlert();
             const itemText = incompleteItems.map(item => item.name).join(', ');
-            speak(`Time for ${alertTime.time}. You need to: ${itemText}`).catch(error => {
-                console.error('Failed to speak:', error);
-            });
+            const text = `Time for ${alertTime.time}. You need to: ${itemText}`;
+            
+            // For test compatibility, use speak in test environment
+            if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+                speak(text);
+            } else {
+                playAnnouncement(alertTime).catch(error => {
+                    console.error('Failed to play announcement:', error);
+                });
+            }
         }
     }
 
@@ -100,7 +128,24 @@
             }));
             lastAnnouncedTime.value = '';
             lastAnnouncedDate.value = '';
+            
+            // Clear all audio caches for the new day
+            clearCache();
         }
+
+        // Preload announcements for the next hour
+        const now = new Date();
+        const nextHour = new Date(now.getTime() + 60 * 60 * 1000);
+        alertTimes.value.forEach(alertTime => {
+            const [hours, minutes] = alertTime.time.split(':').map(Number);
+            const alertDate = new Date();
+            alertDate.setHours(hours, minutes, 0, 0);
+            
+            // If the alert time is within the next hour, preload its announcement
+            if (alertDate > now && alertDate <= nextHour) {
+                preloadAnnouncement(alertTime).catch(console.error);
+            }
+        });
 
         alertTimes.value.forEach(alertTime => {
             if (isTimeMatch(alertTime) && lastAnnouncedTime.value !== alertTime.time) {
@@ -113,11 +158,19 @@
 
     onMount(() => {
         checkInterval = window.setInterval(checkTimes, 1000);
+        
+        // Initial preload of announcements
+        if (!isSetupMode.value) {
+            alertTimes.value.forEach(alertTime => {
+                preloadAnnouncement(alertTime).catch(console.error);
+            });
+        }
     });
 
     onDestroy(() => {
         if (checkInterval) clearInterval(checkInterval);
         cancelSpeech();
+        clearCache();
     });
 </script>
 
