@@ -8,6 +8,7 @@
     import TimeSetup from '../components/TimeSetup.svelte';
     import AlertTimeBlock from '../components/AlertTimeBlock.svelte';
     import ClearDataButton from '../components/ClearDataButton.svelte';
+    import Clock from '../components/Clock.svelte';
 
     let alertTimes = localStore('alertTimes', [] as AlertTime[]);
     let isSetupMode = localStore('isSetupMode', true);
@@ -174,7 +175,8 @@
     });
 </script>
 
-<main class="min-h-screen bg-gray-50">
+<main class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <Clock />
     <div class="flex justify-end mb-6">
         <ModeToggle bind:isSetupMode={isSetupMode.value} />
     </div>
