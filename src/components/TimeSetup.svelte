@@ -1,4 +1,5 @@
 <script lang="ts">
+    import PlusIcon from './icons/PlusIcon.svelte';
     export let newTime: string;
     export let onAddTime: () => void;
 </script>
@@ -14,8 +15,9 @@
         />
         <button 
             on:click={onAddTime}
-            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-800 dark:hover:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            class="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-800 dark:hover:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
         >
+            <PlusIcon size={16} />
             Add Time
         </button>
     </div>

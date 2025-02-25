@@ -1,6 +1,9 @@
 <script lang="ts">
     import type { AlertTime } from '$lib/types';
     import ChecklistItem from './ChecklistItem.svelte';
+    import PlusIcon from './icons/PlusIcon.svelte';
+    import XMarkIcon from './icons/XMarkIcon.svelte';
+    import BellIcon from './icons/BellIcon.svelte';
     
     export let alertTime: AlertTime;
     export let isSetupMode: boolean;
@@ -44,8 +47,9 @@
                 {:else}
                     <button 
                         on:click={() => onManualAlert(alertTime)}
-                        class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-indigo-700 dark:text-indigo-200 bg-indigo-100 dark:bg-indigo-900 hover:bg-indigo-200 dark:hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        class="inline-flex items-center gap-1 px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-indigo-700 dark:text-indigo-200 bg-indigo-100 dark:bg-indigo-900 hover:bg-indigo-200 dark:hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     >
+                        <BellIcon size={14} />
                         Run Alert
                     </button>
                 {/if}
@@ -55,8 +59,9 @@
         {#if isSetupMode}
             <button 
                 on:click={() => onRemoveTime(alertTime.id)}
-                class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-red-700 dark:text-red-200 bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                class="inline-flex items-center gap-1 px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-red-700 dark:text-red-200 bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
             >
+                <XMarkIcon size={14} />
                 Remove Time
             </button>
         {/if}
@@ -72,9 +77,10 @@
             />
             <button 
                 on:click={() => onAddItem(alertTime.id)}
-                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-800 dark:hover:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                class="inline-flex items-center gap-1 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-800 dark:hover:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
-                Add Item
+                <PlusIcon size={16} />
+                Add
             </button>
         </div>
     {/if}

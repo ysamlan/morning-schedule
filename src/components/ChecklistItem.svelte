@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { ChecklistItem } from '$lib/types';
+    import XMarkIcon from './icons/XMarkIcon.svelte';
     
     export let item: ChecklistItem;
     export let isSetupMode: boolean;
@@ -13,8 +14,9 @@
             <span class="text-gray-700 dark:text-gray-300">{item.name}</span>
             <button 
                 on:click={onRemove}
-                class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-red-700 dark:text-red-200 bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                class="inline-flex items-center gap-1 px-2 py-1 border border-transparent text-xs font-medium rounded text-red-700 dark:text-red-200 bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
             >
+                <XMarkIcon size={12} />
                 Remove
             </button>
         </div>

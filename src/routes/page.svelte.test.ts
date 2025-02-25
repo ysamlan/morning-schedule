@@ -74,7 +74,7 @@ describe('/+page.svelte', () => {
         
         const itemInput = within(alertTimeSection).getByPlaceholderText('Add new checklist item');
         await fireEvent.input(itemInput, { target: { value: 'Take medication' } });
-        await fireEvent.click(within(alertTimeSection).getByText('Add Item'));
+        await fireEvent.click(within(alertTimeSection).getByText('Add'));
 
         const alertTimes = JSON.parse(localStorage.getItem('alertTimes')!) as AlertTime[];
         expect(alertTimes[0].items).toHaveLength(1);
@@ -120,7 +120,7 @@ describe('/+page.svelte', () => {
         // Add a checklist item
         const itemInput = screen.getByPlaceholderText('Add new checklist item');
         await fireEvent.input(itemInput, { target: { value: 'Test Item' } });
-        await fireEvent.click(screen.getByRole('button', { name: 'Add Item' }));
+        await fireEvent.click(screen.getByRole('button', { name: 'Add' }));
         
         // Switch to daily mode
         await fireEvent.click(screen.getByRole('button', { name: /Switch to Daily Checklist/ }));
@@ -158,7 +158,7 @@ describe('/+page.svelte', () => {
         
         const firstItemInput = within(firstAlertTimeSection).getByPlaceholderText('Add new checklist item');
         await fireEvent.input(firstItemInput, { target: { value: 'Take morning vitamins' } });
-        await fireEvent.click(within(firstAlertTimeSection).getByText('Add Item'));
+        await fireEvent.click(within(firstAlertTimeSection).getByText('Add'));
         
         // Add second time (10:00) and its tasks
         await fireEvent.input(timeInput, { target: { value: '10:00' } });
@@ -169,7 +169,7 @@ describe('/+page.svelte', () => {
         
         const secondItemInput = within(secondAlertTimeSection).getByPlaceholderText('Add new checklist item');
         await fireEvent.input(secondItemInput, { target: { value: 'Check email' } });
-        await fireEvent.click(within(secondAlertTimeSection).getByText('Add Item'));
+        await fireEvent.click(within(secondAlertTimeSection).getByText('Add'));
         
         // Switch to daily mode and verify tasks are present
         await fireEvent.click(screen.getByRole('button', { name: /Switch to Daily Checklist/ }));
@@ -236,7 +236,7 @@ describe('/+page.svelte', () => {
         
         const itemInput = within(alertTimeSection).getByPlaceholderText('Add new checklist item');
         await fireEvent.input(itemInput, { target: { value: 'Take medication' } });
-        await fireEvent.click(within(alertTimeSection).getByText('Add Item'));
+        await fireEvent.click(within(alertTimeSection).getByText('Add'));
 
         // Switch to daily mode
         await fireEvent.click(screen.getByRole('button', { name: /Switch to Daily Checklist/ }));
@@ -317,7 +317,7 @@ describe('/+page.svelte', () => {
         
         const itemInput = within(firstAlertSection).getByPlaceholderText('Add new checklist item');
         await fireEvent.input(itemInput, { target: { value: 'Test item' } });
-        await fireEvent.click(within(firstAlertSection).getByText('Add Item'));
+        await fireEvent.click(within(firstAlertSection).getByText('Add'));
         
         // Switch to daily mode
         await fireEvent.click(screen.getByRole('button', { name: /Switch to Daily Checklist/ }));
