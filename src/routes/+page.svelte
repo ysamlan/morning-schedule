@@ -199,6 +199,12 @@
                 onManualAlert={announceItems}
             />
         {/each}
+
+        {#if isSetupMode.value}
+            <div class="flex justify-center mt-12">
+                <ClearDataButton />
+            </div>
+        {/if}
     </div>
 
     <ModeToggle bind:isSetupMode={isSetupMode.value} />
