@@ -1,6 +1,18 @@
 <script lang="ts">
 	let { children } = $props();
   import "../app.css";
+  import { SvelteToast } from '@zerodevx/svelte-toast';
+
+  const toastOptions = {
+    duration: 4000,
+    pausable: true,
+    dismissable: true,
+    theme: {
+      '--toastBackground': '#4F46E5', // indigo-600
+      '--toastColor': 'white',
+      '--toastBarBackground': '#E0E7FF' // indigo-100
+    }
+  };
 </script>
 
 <nav class="bg-white shadow-sm border-b border-gray-200">
@@ -18,3 +30,5 @@
 <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
   {@render children()}
 </main>
+
+<SvelteToast options={toastOptions} />

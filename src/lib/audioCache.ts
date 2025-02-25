@@ -1,5 +1,6 @@
 import type { AlertTime } from './types';
 import { speak } from './tts';
+import { toast } from '@zerodevx/svelte-toast';
 
 interface CachedAudio {
     blob: Blob;
@@ -72,6 +73,12 @@ export async function preloadAnnouncement(alertTime: AlertTime): Promise<void> {
 }
 
 export async function playAnnouncement(alertTime: AlertTime): Promise<void> {
+    const text = generateAnnouncementText(alertTime);
+    if (!text) return; // Nothing to announce
+
+    // Show toast notification
+    toast.push(`🔔 ${text}`);
+
     const cacheKey = getCacheKey(alertTime);
     const cached = audioCache.get(cacheKey);
 
@@ -87,10 +94,7 @@ export async function playAnnouncement(alertTime: AlertTime): Promise<void> {
     }
 
     // Fall back to regular TTS if no cache or cache failed
-    const text = generateAnnouncementText(alertTime);
-    if (text) {
-        await speak({ text });
-    }
+    await speak({ text });
 }
 
 // Clean up cache when window unloads
