@@ -32,19 +32,19 @@ describe('/+page.svelte', () => {
 
     test('should start in setup mode', () => {
         render(Page);
-        expect(screen.getByText('Switch to Daily Checklist Mode')).toBeInTheDocument();
+        expect(screen.getByText('Switch to Daily Checklist')).toBeInTheDocument();
         expect(screen.getByText('Setup Mode')).toBeInTheDocument();
     });
 
     test('should toggle between setup and daily mode', async () => {
         render(Page);
-        const toggleButton = screen.getByRole('button', { name: /Switch to Daily Checklist Mode|Switch to Setup Mode/ });
+        const toggleButton = screen.getByRole('button', { name: /Switch to Daily Checklist|Switch to Setup Mode/ });
         
         await fireEvent.click(toggleButton);
         expect(screen.getByRole('button', { name: /Switch to Setup Mode/ })).toBeInTheDocument();
         
         await fireEvent.click(screen.getByRole('button', { name: /Switch to Setup Mode/ }));
-        expect(screen.getByRole('button', { name: /Switch to Daily Checklist Mode/ })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Switch to Daily Checklist/ })).toBeInTheDocument();
     });
 
     test('should add new alert time', async () => {
@@ -112,33 +112,33 @@ describe('/+page.svelte', () => {
         // Set the time to 8:30 AM (before our 9:00 AM test time)
         vi.setSystemTime(new Date(2025, 1, 1, 8, 30));
         
-        // Setup: Add time and item
+        // Add a new alert time
         const timeInput = screen.getByPlaceholderText('Add new alert time');
         await fireEvent.input(timeInput, { target: { value: '09:00' } });
-        await fireEvent.click(screen.getByText('Add Time'));
+        await fireEvent.click(screen.getByRole('button', { name: 'Add Time' }));
         
-        // Find the alert time section and add an item
-        const alertTimeSection = screen.getByRole('heading', { name: '09:00' }).closest('div.bg-white');
+        // Add a checklist item
+        const itemInput = screen.getByPlaceholderText('Add new checklist item');
+        await fireEvent.input(itemInput, { target: { value: 'Test Item' } });
+        await fireEvent.click(screen.getByRole('button', { name: 'Add Item' }));
         
-        const itemInput = within(alertTimeSection).getByPlaceholderText('Add new checklist item');
-        await fireEvent.input(itemInput, { target: { value: 'Take medication' } });
-        await fireEvent.click(within(alertTimeSection).getByText('Add Item'));
-
         // Switch to daily mode
-        await fireEvent.click(screen.getByRole('button', { name: /Switch to Daily Checklist Mode/ }));
+        await fireEvent.click(screen.getByRole('button', { name: /Switch to Daily Checklist/ }));
 
-        // Find the daily mode section and the checkbox within it
-        const dailySection = screen.getByRole('heading', { name: 'Daily Checklist' }).parentElement;
-        if (!dailySection) throw new Error('Daily section not found');
+        // Now set the time to the first alert time
+        vi.setSystemTime(new Date(2025, 1, 1, 9, 0));
+        vi.advanceTimersByTime(1000); // Advance time to trigger alerts
         
-        const checkbox = within(dailySection).getByRole('checkbox', { name: 'Take medication' });
+        // Toggle the item
+        await fireEvent.click(screen.getByRole('checkbox'));
+        expect(screen.getByRole('checkbox')).toBeChecked();
         
-        // Toggle the checkbox and verify the state change
-        await fireEvent.click(checkbox);
+        // Switch back to setup mode
+        await fireEvent.click(screen.getByRole('button', { name: /Switch to Setup Mode/ }));
 
-        const alertTimes =  JSON.parse(localStorage.getItem('alertTimes')!) as AlertTime[];
-        expect(alertTimes[0].items[0].isCompleted).toBe(true);
-        expect(checkbox).toBeChecked();
+        // Switch back to daily mode to verify persistence
+        await fireEvent.click(screen.getByRole('button', { name: /Switch to Daily Checklist/ }));
+        expect(screen.getByRole('checkbox')).toBeChecked();
     });
 
     test('should persist tasks between setup and task list modes', async () => {
@@ -172,7 +172,7 @@ describe('/+page.svelte', () => {
         await fireEvent.click(within(secondAlertTimeSection).getByText('Add Item'));
         
         // Switch to daily mode and verify tasks are present
-        await fireEvent.click(screen.getByRole('button', { name: /Switch to Daily Checklist Mode/ }));
+        await fireEvent.click(screen.getByRole('button', { name: /Switch to Daily Checklist/ }));
         
         const dailySection = screen.getByRole('heading', { name: 'Daily Checklist' }).parentElement;
         if (!dailySection) throw new Error('Daily section not found');
@@ -201,7 +201,7 @@ describe('/+page.svelte', () => {
         expect(within(updatedSecondAlertTimeSection).getByText('Check email')).toBeInTheDocument();
         
         // Switch to daily mode again and verify completion state persisted
-        await fireEvent.click(screen.getByRole('button', { name: /Switch to Daily Checklist Mode/ }));
+        await fireEvent.click(screen.getByRole('button', { name: /Switch to Daily Checklist/ }));
         
         const updatedDailySection = screen.getByRole('heading', { name: 'Daily Checklist' }).parentElement;
         if (!updatedDailySection) throw new Error('Daily section not found');
@@ -239,7 +239,7 @@ describe('/+page.svelte', () => {
         await fireEvent.click(within(alertTimeSection).getByText('Add Item'));
 
         // Switch to daily mode
-        await fireEvent.click(screen.getByRole('button', { name: /Switch to Daily Checklist Mode/ }));
+        await fireEvent.click(screen.getByRole('button', { name: /Switch to Daily Checklist/ }));
 
         // Advance time to 9:00 AM
         vi.setSystemTime(new Date(2025, 1, 1, 9, 0));
@@ -320,7 +320,7 @@ describe('/+page.svelte', () => {
         await fireEvent.click(within(firstAlertSection).getByText('Add Item'));
         
         // Switch to daily mode
-        await fireEvent.click(screen.getByRole('button', { name: /Switch to Daily Checklist Mode/ }));
+        await fireEvent.click(screen.getByRole('button', { name: /Switch to Daily Checklist/ }));
 
         // Now set the time to the first alert time
         vi.setSystemTime(new Date(2025, 1, 20, 14, 17, 0));

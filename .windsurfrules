@@ -37,4 +37,5 @@ Tooling
 Testing
 - Use Playwright for end-to-end testing and vitest for unit tests.
 - When adding functionality, consider adding a new test or updating existing tests when appropriate.
-- Run any tests you write using `pnpm test` or the more focused `pnpm test:unit --run` to verify your functionality and test are correct.
+- Run tests using `pnpm test` or the more focused `pnpm test:unit --run` to verify your functionality and test are correct.
+- When making code changes, be sure to check if the tests still pass at the end of the process.

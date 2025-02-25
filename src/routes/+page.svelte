@@ -177,11 +177,7 @@
 
 <main class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <Clock />
-    <div class="flex justify-end mb-6">
-        <ModeToggle bind:isSetupMode={isSetupMode.value} />
-    </div>
-
-    <div class="space-y-8">
+    <div class="space-y-8 pb-24">
         {#if isSetupMode.value}
             <TimeSetup bind:newTime onAddTime={handleAddTime} />
         {:else}
@@ -210,6 +206,8 @@
             </div>
         {/if}
     </div>
+
+    <ModeToggle bind:isSetupMode={isSetupMode.value} />
 </main>
 
 <style lang="postcss">

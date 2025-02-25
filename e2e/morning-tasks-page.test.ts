@@ -4,7 +4,7 @@ test('morning tasks page renders in default state', async ({ page }) => {
     await page.goto('/');
     
     // Verify the mode toggle button is present
-    const modeToggleButton = page.getByRole('button', { name: 'Switch to Daily Checklist Mode' });
+    const modeToggleButton = page.getByRole('button', { name: 'Switch to Daily Checklist' });
     await expect(modeToggleButton).toBeVisible();
     
     // Verify we start in Setup Mode
