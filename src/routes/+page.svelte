@@ -177,11 +177,11 @@
 
 <main class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <Clock />
-    <div class="space-y-8 pb-24">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {#if isSetupMode.value}
             <TimeSetup bind:newTime onAddTime={handleAddTime} />
         {:else}
-            <h2 class="text-2xl font-bold text-gray-900 mb-6">Daily Checklist</h2>
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Daily Checklist</h2>
         {/if}
 
         {#each alertTimes.value as alertTime}
@@ -199,12 +199,6 @@
                 onManualAlert={announceItems}
             />
         {/each}
-
-        {#if isSetupMode.value}
-            <div class="flex justify-center mt-12">
-                <ClearDataButton />
-            </div>
-        {/if}
     </div>
 
     <ModeToggle bind:isSetupMode={isSetupMode.value} />

@@ -2,13 +2,13 @@
     export let isSetupMode: boolean;
 </script>
 
-<div class="sticky bottom-0 w-full p-4 bg-white border-t border-gray-200 shadow-lg">
+<div class="sticky bottom-0 w-full p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg">
     <button 
         on:click={() => isSetupMode = !isSetupMode}
         class="w-full flex justify-center items-center gap-2 px-4 py-3 text-sm font-medium rounded-lg transition-colors
                {isSetupMode 
-                   ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' 
-                   : 'bg-indigo-600 text-white hover:bg-indigo-700'}"
+                   ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600' 
+                   : 'bg-indigo-600 dark:bg-indigo-800 text-white hover:bg-indigo-700 dark:hover:bg-indigo-900'}"
     >
         {#if isSetupMode}
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
