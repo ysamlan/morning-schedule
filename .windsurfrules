@@ -38,4 +38,4 @@ Testing
 - Use Playwright for end-to-end testing and vitest for unit tests.
 - When adding functionality, consider adding a new test or updating existing tests when appropriate.
 - Run tests using `pnpm test` or the more focused `pnpm test:unit --run` to verify your functionality and test are correct.
-- When making code changes, be sure to check if the tests still pass at the end of the process.
+- When making code changes, be sure to check if the tests still pass at the end of the process. Assume I'm running the app in dev mode in the background for manual testing; don't suggest running `pnpm dev`. You should run `pnpm test` or `pnpm test:unit --run` to verify your changes, though.

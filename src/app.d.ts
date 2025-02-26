@@ -8,6 +8,12 @@ declare global {
 		// interface PageState {}
 		// interface Platform {}
 	}
+
+	interface Window {
+		updateAudioCacheTimeout?: number;
+		setTimeout(handler: TimerHandler, timeout?: number, ...arguments: any[]): number;
+		clearTimeout(timeoutId?: number): void;
+	}
 }
 
 export {};

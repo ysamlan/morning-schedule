@@ -22,7 +22,15 @@
 
     function handleAddTime() {
         if (newTime) {
-            alertTimes.value.push({ id: crypto.randomUUID(), time: newTime, items: [] });
+            // Add a new time with an initial blank checklist item
+            const newTimeId = crypto.randomUUID();
+            alertTimes.value.push({ 
+                id: newTimeId, 
+                time: newTime, 
+                items: [{ id: crypto.randomUUID(), name: '', isCompleted: false }] 
+            });
+            // Initialize newItemName for this time slot
+            newItemName[newTimeId] = '';
             newTime = '';
         }
     }
@@ -58,33 +66,61 @@
         }
     }
 
-    function handleRemoveItem(alertTimeId: string, itemId: string) {
-        alertTimes.value = alertTimes.value.map(at => 
-            at.id === alertTimeId 
-                ? { ...at, items: at.items.filter(item => item.id !== itemId) }
-                : at
-        );
-        
-        // Clear and regenerate audio cache for this time
-        clearCache(alertTimeId);
+    function handleAddBlankItem(alertTimeId: string) {
+        // Find the time and add the item directly
         const alertTime = alertTimes.value.find(at => at.id === alertTimeId);
         if (alertTime) {
-            preloadAnnouncement(alertTime).catch(console.error);
+            alertTime.items.push({
+                id: crypto.randomUUID(),
+                name: '',
+                isCompleted: false
+            });
+            // Force a reactive update
+            alertTimes.value = [...alertTimes.value];
+        }
+    }
+
+    function handleUpdateItemName(alertTimeId: string, itemId: string, newName: string) {
+        // Find the item directly and update it without recreating the entire structure
+        const alertTime = alertTimes.value.find(at => at.id === alertTimeId);
+        if (alertTime) {
+            const item = alertTime.items.find(item => item.id === itemId);
+            if (item) {
+                item.name = newName;
+                // Force a reactive update
+                alertTimes.value = [...alertTimes.value];
+            }
+        }
+    }
+
+    function handleRemoveItem(alertTimeId: string, itemId: string) {
+
+        // Find the time and remove the item directly
+        const alertTime = alertTimes.value.find(at => at.id === alertTimeId);
+        if (alertTime) {
+            alertTime.items = alertTime.items.filter(item => item.id !== itemId);
+            // Force a reactive update
+            alertTimes.value = [...alertTimes.value];
         }
     }
 
     function toggleChecklistItem(alertTimeId: string, itemId: string) {
-        alertTimes.value = alertTimes.value.map(at => 
-            at.id === alertTimeId ? { ...at, items: at.items.map(item => 
-                item.id === itemId ? { ...item, isCompleted: !item.isCompleted } : item
-            )} : at
-        );
         
-        // Clear and regenerate audio cache for this time
-        clearCache(alertTimeId);
+        // Find and update the item directly
         const alertTime = alertTimes.value.find(at => at.id === alertTimeId);
         if (alertTime) {
-            preloadAnnouncement(alertTime).catch(console.error);
+            const item = alertTime.items.find(item => item.id === itemId);
+            if (item) {
+                item.isCompleted = !item.isCompleted;
+                // Force a reactive update
+                alertTimes.value = [...alertTimes.value];
+                
+                // Update audio cache immediately for completion status changes
+                // as this directly affects what will be announced
+                console.log('Updating audio cache after completion status change');
+                clearCache(alertTimeId);
+                preloadAnnouncement(alertTime).catch(console.error);
+            }
         }
     }
 
@@ -173,6 +209,15 @@
         cancelSpeech();
         clearCache();
     });
+
+    // Watch for changes to isSetupMode and rebuild audio cache when switching to checklist mode
+    $: if (isSetupMode.value === false) {
+        console.log('Switched to checklist mode, rebuilding audio cache');
+        clearCache();
+        alertTimes.value.forEach(alertTime => {
+            preloadAnnouncement(alertTime).catch(console.error);
+        });
+    }
 </script>
 
 <main class="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -194,7 +239,9 @@
                 onEditTime={handleEditTime}
                 onRemoveTime={(id) => alertTimes.value = alertTimes.value.filter(at => at.id !== id)}
                 onAddItem={handleAddItem}
+                onAddBlankItem={handleAddBlankItem}
                 onToggleItem={toggleChecklistItem}
+                onUpdateItemName={handleUpdateItemName}
                 onRemoveItem={handleRemoveItem}
                 onManualAlert={announceItems}
             />
