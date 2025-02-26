@@ -10,10 +10,10 @@
     export let isSetupMode: boolean;
     export let editingTimeId: string;
     export let newTime: string;
-    export let newItemName: { [key: string]: string };
+    export const newItemName: { [key: string]: string } = {}; 
     export let onEditTime: (id: string) => void;
     export let onRemoveTime: (id: string) => void;
-    export let onAddItem: (id: string) => void;
+    export const onAddItem: (id: string) => void = () => {}; 
     export let onAddBlankItem: (id: string) => void;
     export let onToggleItem: (timeId: string, itemId: string) => void;
     export let onUpdateItemName: (timeId: string, itemId: string, newName: string) => void;
