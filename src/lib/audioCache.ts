@@ -6,6 +6,7 @@ interface CachedAudio {
     blob: Blob;
     url: string;
     audio: HTMLAudioElement;
+    text: string; // Store the text to enable reuse
 }
 
 const audioCache = new Map<string, CachedAudio>();
@@ -17,16 +18,32 @@ function generateAnnouncementText(alertTime: AlertTime): string {
     return `Time for ${alertTime.time}. You need to: ${itemText}`;
 }
 
-function getCacheKey(alertTime: AlertTime): string {
-    const text = generateAnnouncementText(alertTime);
-    return `${alertTime.id}-${text}`;
+function getTextHash(text: string): string {
+    // Simple hash function for text - good enough for our use case
+    let hash = 0;
+    for (let i = 0; i < text.length; i++) {
+        const char = text.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+    }
+    return hash.toString(36);
+}
+
+function getCacheKey(text: string): string {
+    return `text-${getTextHash(text)}`;
 }
 
 export function clearCache(alertTimeId?: string): void {
     if (alertTimeId) {
-        // Clear specific alert time's cached audio
-        for (const [key, cached] of audioCache.entries()) {
-            if (key.startsWith(`${alertTimeId}-`)) {
+        // Only clear entries that are no longer needed
+        const alertTimeText = Array.from(audioCache.values())
+            .filter(cached => cached.text.includes(`Time for ${alertTimeId}`))
+            .map(cached => cached.text);
+        
+        for (const text of alertTimeText) {
+            const key = getCacheKey(text);
+            const cached = audioCache.get(key);
+            if (cached) {
                 URL.revokeObjectURL(cached.url);
                 audioCache.delete(key);
             }
@@ -44,7 +61,7 @@ export async function preloadAnnouncement(alertTime: AlertTime): Promise<void> {
     const text = generateAnnouncementText(alertTime);
     if (!text) return; // Nothing to announce
 
-    const cacheKey = getCacheKey(alertTime);
+    const cacheKey = getCacheKey(text);
     
     // If already cached and valid, nothing to do
     if (audioCache.has(cacheKey)) return;
@@ -53,7 +70,7 @@ export async function preloadAnnouncement(alertTime: AlertTime): Promise<void> {
         // Generate audio using vits-web
         const wav = await speak({ 
             text,
-            returnAudio: true // New option to return audio without playing
+            returnAudio: true
         });
 
         // Cache the audio
@@ -65,7 +82,7 @@ export async function preloadAnnouncement(alertTime: AlertTime): Promise<void> {
             audio.load();
         });
 
-        audioCache.set(cacheKey, { blob: wav, url, audio });
+        audioCache.set(cacheKey, { blob: wav, url, audio, text });
     } catch (error) {
         console.warn('Failed to preload announcement:', error);
         // Don't cache failures - we'll fall back to regular TTS if needed
@@ -79,7 +96,7 @@ export async function playAnnouncement(alertTime: AlertTime): Promise<void> {
     // Show toast notification
     toast.push(`🔔 ${text}`);
 
-    const cacheKey = getCacheKey(alertTime);
+    const cacheKey = getCacheKey(text);
     const cached = audioCache.get(cacheKey);
 
     if (cached) {
@@ -95,6 +112,15 @@ export async function playAnnouncement(alertTime: AlertTime): Promise<void> {
 
     // Fall back to regular TTS if no cache or cache failed
     await speak({ text });
+}
+
+// For testing
+export function _getCacheSize(): number {
+    return audioCache.size;
+}
+
+export function _clearCacheForTesting(): void {
+    clearCache();
 }
 
 // Clean up cache when window unloads
