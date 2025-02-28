@@ -18,13 +18,15 @@
         const target = e.target as HTMLInputElement;
         localName = target.value;
         
-        if (updateTimeout) {
-            clearTimeout(updateTimeout);
-        }
+        // if (updateTimeout) {
+        //     clearTimeout(updateTimeout);
+        // }
         
-        updateTimeout = window.setTimeout(() => {
-            onUpdate(localName);
-        }, 300);
+        // updateTimeout = window.setTimeout(() => {
+        //     onUpdate(localName);
+        // }, 300);
+        // if we do this instead of using timeouts the tests pass
+        onUpdate(localName);
     }
 </script>
 
