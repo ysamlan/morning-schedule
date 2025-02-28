@@ -5,6 +5,7 @@ import svelte from 'eslint-plugin-svelte';
 import globals from 'globals';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript-eslint';
+import svelteParser from "svelte-eslint-parser";
 const gitignorePath = fileURLToPath(new URL('./.gitignore', import.meta.url));
 
 export default ts.config(
@@ -23,12 +24,20 @@ export default ts.config(
 		}
 	},
 	{
-		files: ['**/*.svelte'],
-
-		languageOptions: {
-			parserOptions: {
-				parser: ts.parser
-			}
+		files: [
+			"**/*.svelte",
+      "*.svelte",
+      // Need to specify the file extension for Svelte 5 with rune symbols
+      "**/*.svelte.js",
+      "*.svelte.js",
+      "**/*.svelte.ts",
+      "*.svelte.ts",
+		],
+    languageOptions: {
+      parser: svelteParser,
+      parserOptions: {
+        parser: tsParser,
+      }
 		}
 	}
 );
