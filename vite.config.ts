@@ -2,9 +2,10 @@ import { svelteTesting } from '@testing-library/svelte/vite';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 import tailwindcss from '@tailwindcss/vite';
+import { comlink } from 'vite-plugin-comlink';
 
 export default defineConfig({
-	plugins: [sveltekit(), tailwindcss()],
+	plugins: [comlink(), sveltekit(), tailwindcss()],
 
 	server: {
 		headers: {
